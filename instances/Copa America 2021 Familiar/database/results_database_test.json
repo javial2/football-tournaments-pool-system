@@ -1,0 +1,35 @@
+{
+    "database": [
+        {
+            "name": "RESULTS",
+            "email": null,
+            "champion": null,
+            "games": {
+                "1": {
+                    "data": {
+                        "local_team": "Brasil",
+                        "visit_team": "Venezuela",
+                        "local_score": 2,
+                        "visit_score": 0
+                    }
+                },
+                "2": {
+                    "data": {
+                        "local_team": "Brasil",
+                        "visit_team": "Venezuela",
+                        "local_score": 2,
+                        "visit_score": 0
+                    }
+                },
+                "3": {
+                    "data": {
+                        "local_team": "Brasil",
+                        "visit_team": "Venezuela",
+                        "local_score": 2,
+                        "visit_score": 0
+                    }
+                }
+            }
+        }
+    ]
+}

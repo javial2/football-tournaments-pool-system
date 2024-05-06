@@ -1,0 +1,199 @@
+{
+    "name": ["INFORMACION", "C3"],
+    "email": ["INFORMACION", "C4"],
+    "champion": ["Play-Off", "W24"],
+    "games": {
+        "1": {
+            "data": {"local_team": ["GRUPO A", "K7"], "visit_team": ["GRUPO A", "N7"], "local_score": ["GRUPO A", "L7"], "visit_score": ["GRUPO A", "M7"]}
+        },
+        "2": {
+            "data": {"local_team": ["GRUPO A", "K8"], "visit_team": ["GRUPO A", "N8"], "local_score": ["GRUPO A", "L8"], "visit_score": ["GRUPO A", "M8"]}
+        },
+        "17": {
+            "data": {"local_team": ["GRUPO A", "K9"], "visit_team": ["GRUPO A", "N9"], "local_score": ["GRUPO A", "L9"], "visit_score": ["GRUPO A", "M9"]}
+        },
+        "18": {
+            "data": {"local_team": ["GRUPO A", "K10"], "visit_team": ["GRUPO A", "N10"], "local_score": ["GRUPO A", "L10"], "visit_score": ["GRUPO A", "M10"]}
+        },
+        "33": {
+            "data": {"local_team": ["GRUPO A", "K11"], "visit_team": ["GRUPO A", "N11"], "local_score": ["GRUPO A", "L11"], "visit_score": ["GRUPO A", "M11"]}
+        },
+        "34": {
+            "data": {"local_team": ["GRUPO A", "K12"], "visit_team": ["GRUPO A", "N12"], "local_score": ["GRUPO A", "L12"], "visit_score": ["GRUPO A", "M12"]}
+        },
+        "3": {
+            "data": {"local_team": ["GRUPO B", "K7"], "visit_team": ["GRUPO B", "N7"], "local_score": ["GRUPO B", "L7"], "visit_score": ["GRUPO B", "M7"]}
+        },
+        "4": {
+            "data": {"local_team": ["GRUPO B", "K8"], "visit_team": ["GRUPO B", "N8"], "local_score": ["GRUPO B", "L8"], "visit_score": ["GRUPO B", "M8"]}
+        },
+        "19": {
+            "data": {"local_team": ["GRUPO B", "K9"], "visit_team": ["GRUPO B", "N9"], "local_score": ["GRUPO B", "L9"], "visit_score": ["GRUPO B", "M9"]}
+        },
+        "20": {
+            "data": {"local_team": ["GRUPO B", "K10"], "visit_team": ["GRUPO B", "N10"], "local_score": ["GRUPO B", "L10"], "visit_score": ["GRUPO B", "M10"]}
+        },
+        "35": {
+            "data": {"local_team": ["GRUPO B", "K11"], "visit_team": ["GRUPO B", "N11"], "local_score": ["GRUPO B", "L11"], "visit_score": ["GRUPO B", "M11"]}
+        },
+        "36": {
+            "data": {"local_team": ["GRUPO B", "K12"], "visit_team": ["GRUPO B", "N12"], "local_score": ["GRUPO B", "L12"], "visit_score": ["GRUPO B", "M12"]}
+        },
+        "5": {
+            "data": {"local_team": ["GRUPO C", "K7"], "visit_team": ["GRUPO C", "N7"], "local_score": ["GRUPO C", "L7"], "visit_score": ["GRUPO C", "M7"]}
+        },
+        "6": {
+            "data": {"local_team": ["GRUPO C", "K8"], "visit_team": ["GRUPO C", "N8"], "local_score": ["GRUPO C", "L8"], "visit_score": ["GRUPO C", "M8"]}
+        },
+        "21": {
+            "data": {"local_team": ["GRUPO C", "K9"], "visit_team": ["GRUPO C", "N9"], "local_score": ["GRUPO C", "L9"], "visit_score": ["GRUPO C", "M9"]}
+        },
+        "22": {
+            "data": {"local_team": ["GRUPO C", "K10"], "visit_team": ["GRUPO C", "N10"], "local_score": ["GRUPO C", "L10"], "visit_score": ["GRUPO C", "M10"]}
+        },
+        "37": {
+            "data": {"local_team": ["GRUPO C", "K11"], "visit_team": ["GRUPO C", "N11"], "local_score": ["GRUPO C", "L11"], "visit_score": ["GRUPO C", "M11"]}
+        },
+        "38": {
+            "data": {"local_team": ["GRUPO C", "K12"], "visit_team": ["GRUPO C", "N12"], "local_score": ["GRUPO C", "L12"], "visit_score": ["GRUPO C", "M12"]}
+        },
+        "7": {
+            "data": {"local_team": ["GRUPO D", "K7"], "visit_team": ["GRUPO D", "N7"], "local_score": ["GRUPO D", "L7"], "visit_score": ["GRUPO D", "M7"]}
+        },
+        "8": {
+            "data": {"local_team": ["GRUPO D", "K8"], "visit_team": ["GRUPO D", "N8"], "local_score": ["GRUPO D", "L8"], "visit_score": ["GRUPO D", "M8"]}
+        },
+        "23": {
+            "data": {"local_team": ["GRUPO D", "K9"], "visit_team": ["GRUPO D", "N9"], "local_score": ["GRUPO D", "L9"], "visit_score": ["GRUPO D", "M9"]}
+        },
+        "24": {
+            "data": {"local_team": ["GRUPO D", "K10"], "visit_team": ["GRUPO D", "N10"], "local_score": ["GRUPO D", "L10"], "visit_score": ["GRUPO D", "M10"]}
+        },
+        "39": {
+            "data": {"local_team": ["GRUPO D", "K11"], "visit_team": ["GRUPO D", "N11"], "local_score": ["GRUPO D", "L11"], "visit_score": ["GRUPO D", "M11"]}
+        },
+        "40": {
+            "data": {"local_team": ["GRUPO D", "K12"], "visit_team": ["GRUPO D", "N12"], "local_score": ["GRUPO D", "L12"], "visit_score": ["GRUPO D", "M12"]}
+        },
+        "9": {
+            "data": {"local_team": ["GRUPO E", "K7"], "visit_team": ["GRUPO E", "N7"], "local_score": ["GRUPO E", "L7"], "visit_score": ["GRUPO E", "M7"]}
+        },
+        "10": {
+            "data": {"local_team": ["GRUPO E", "K8"], "visit_team": ["GRUPO E", "N8"], "local_score": ["GRUPO E", "L8"], "visit_score": ["GRUPO E", "M8"]}
+        },
+        "25": {
+            "data": {"local_team": ["GRUPO E", "K9"], "visit_team": ["GRUPO E", "N9"], "local_score": ["GRUPO E", "L9"], "visit_score": ["GRUPO E", "M9"]}
+        },
+        "26": {
+            "data": {"local_team": ["GRUPO E", "K10"], "visit_team": ["GRUPO E", "N10"], "local_score": ["GRUPO E", "L10"], "visit_score": ["GRUPO E", "M10"]}
+        },
+        "41": {
+            "data": {"local_team": ["GRUPO E", "K11"], "visit_team": ["GRUPO E", "N11"], "local_score": ["GRUPO E", "L11"], "visit_score": ["GRUPO E", "M11"]}
+        },
+        "42": {
+            "data": {"local_team": ["GRUPO E", "K12"], "visit_team": ["GRUPO E", "N12"], "local_score": ["GRUPO E", "L12"], "visit_score": ["GRUPO E", "M12"]}
+        },
+        "11": {
+            "data": {"local_team": ["GRUPO F", "K7"], "visit_team": ["GRUPO F", "N7"], "local_score": ["GRUPO F", "L7"], "visit_score": ["GRUPO F", "M7"]}
+        },
+        "12": {
+            "data": {"local_team": ["GRUPO F", "K8"], "visit_team": ["GRUPO F", "N8"], "local_score": ["GRUPO F", "L8"], "visit_score": ["GRUPO F", "M8"]}
+        },
+        "27": {
+            "data": {"local_team": ["GRUPO F", "K9"], "visit_team": ["GRUPO F", "N9"], "local_score": ["GRUPO F", "L9"], "visit_score": ["GRUPO F", "M9"]}
+        },
+        "28": {
+            "data": {"local_team": ["GRUPO F", "K10"], "visit_team": ["GRUPO F", "N10"], "local_score": ["GRUPO F", "L10"], "visit_score": ["GRUPO F", "M10"]}
+        },
+        "43": {
+            "data": {"local_team": ["GRUPO F", "K11"], "visit_team": ["GRUPO F", "N11"], "local_score": ["GRUPO F", "L11"], "visit_score": ["GRUPO F", "M11"]}
+        },
+        "44": {
+            "data": {"local_team": ["GRUPO F", "K12"], "visit_team": ["GRUPO F", "N12"], "local_score": ["GRUPO F", "L12"], "visit_score": ["GRUPO F", "M12"]}
+        },
+        "13": {
+            "data": {"local_team": ["GRUPO G", "K7"], "visit_team": ["GRUPO G", "N7"], "local_score": ["GRUPO G", "L7"], "visit_score": ["GRUPO G", "M7"]}
+        },
+        "14": {
+            "data": {"local_team": ["GRUPO G", "K8"], "visit_team": ["GRUPO G", "N8"], "local_score": ["GRUPO G", "L8"], "visit_score": ["GRUPO G", "M8"]}
+        },
+        "29": {
+            "data": {"local_team": ["GRUPO G", "K9"], "visit_team": ["GRUPO G", "N9"], "local_score": ["GRUPO G", "L9"], "visit_score": ["GRUPO G", "M9"]}
+        },
+        "30": {
+            "data": {"local_team": ["GRUPO G", "K10"], "visit_team": ["GRUPO G", "N10"], "local_score": ["GRUPO G", "L10"], "visit_score": ["GRUPO G", "M10"]}
+        },
+        "45": {
+            "data": {"local_team": ["GRUPO G", "K11"], "visit_team": ["GRUPO G", "N11"], "local_score": ["GRUPO G", "L11"], "visit_score": ["GRUPO G", "M11"]}
+        },
+        "46": {
+            "data": {"local_team": ["GRUPO G", "K12"], "visit_team": ["GRUPO G", "N12"], "local_score": ["GRUPO G", "L12"], "visit_score": ["GRUPO G", "M12"]}
+        },
+        "15": {
+            "data": {"local_team": ["GRUPO H", "K7"], "visit_team": ["GRUPO H", "N7"], "local_score": ["GRUPO H", "L7"], "visit_score": ["GRUPO H", "M7"]}
+        },
+        "16": {
+            "data": {"local_team": ["GRUPO H", "K8"], "visit_team": ["GRUPO H", "N8"], "local_score": ["GRUPO H", "L8"], "visit_score": ["GRUPO H", "M8"]}
+        },
+        "31": {
+            "data": {"local_team": ["GRUPO H", "K9"], "visit_team": ["GRUPO H", "N9"], "local_score": ["GRUPO H", "L9"], "visit_score": ["GRUPO H", "M9"]}
+        },
+        "32": {
+            "data": {"local_team": ["GRUPO H", "K10"], "visit_team": ["GRUPO H", "N10"], "local_score": ["GRUPO H", "L10"], "visit_score": ["GRUPO H", "M10"]}
+        },
+        "47": {
+            "data": {"local_team": ["GRUPO H", "K11"], "visit_team": ["GRUPO H", "N11"], "local_score": ["GRUPO H", "L11"], "visit_score": ["GRUPO H", "M11"]}
+        },
+        "48": {
+            "data": {"local_team": ["GRUPO H", "K12"], "visit_team": ["GRUPO H", "N12"], "local_score": ["GRUPO H", "L12"], "visit_score": ["GRUPO H", "M12"]}
+        },
+        "49": {
+            "data": {"local_team": ["Play-Off", "B6"], "visit_team": ["Play-Off", "B7"], "local_score": ["Play-Off", "C6"], "visit_score": ["Play-Off", "C7"]}
+        },
+        "50": {
+            "data": {"local_team": ["Play-Off", "B10"], "visit_team": ["Play-Off", "B11"], "local_score": ["Play-Off", "C10"], "visit_score": ["Play-Off", "C11"]}
+        },
+        "53": {
+            "data": {"local_team": ["Play-Off", "B14"], "visit_team": ["Play-Off", "B15"], "local_score": ["Play-Off", "C14"], "visit_score": ["Play-Off", "C15"]}
+        },
+        "54": {
+            "data": {"local_team": ["Play-Off", "B18"], "visit_team": ["Play-Off", "B19"], "local_score": ["Play-Off", "C18"], "visit_score": ["Play-Off", "C19"]}
+        },
+        "51": {
+            "data": {"local_team": ["Play-Off", "B22"], "visit_team": ["Play-Off", "B23"], "local_score": ["Play-Off", "C22"], "visit_score": ["Play-Off", "C23"]}
+        },
+        "52": {
+            "data": {"local_team": ["Play-Off", "B26"], "visit_team": ["Play-Off", "B27"], "local_score": ["Play-Off", "C26"], "visit_score": ["Play-Off", "C27"]}
+        },
+        "55": {
+            "data": {"local_team": ["Play-Off", "B30"], "visit_team": ["Play-Off", "B31"], "local_score": ["Play-Off", "C30"], "visit_score": ["Play-Off", "C31"]}
+        },
+        "56": {
+            "data": {"local_team": ["Play-Off", "B34"], "visit_team": ["Play-Off", "B35"], "local_score": ["Play-Off", "C34"], "visit_score": ["Play-Off", "C35"]}
+        },
+        "57": {
+            "data": {"local_team": ["Play-Off", "G8"], "visit_team": ["Play-Off", "G9"], "local_score": ["Play-Off", "H8"], "visit_score": ["Play-Off", "H9"]}
+        },
+        "58": {
+            "data": {"local_team": ["Play-Off", "G16"], "visit_team": ["Play-Off", "G17"], "local_score": ["Play-Off", "H16"], "visit_score": ["Play-Off", "H17"]}
+        },
+        "59": {
+            "data": {"local_team": ["Play-Off", "G24"], "visit_team": ["Play-Off", "G25"], "local_score": ["Play-Off", "H24"], "visit_score": ["Play-Off", "H25"]}
+        },
+        "60": {
+            "data": {"local_team": ["Play-Off", "G32"], "visit_team": ["Play-Off", "G33"], "local_score": ["Play-Off", "H32"], "visit_score": ["Play-Off", "H33"]}
+        },
+        "61": {
+            "data": {"local_team": ["Play-Off", "L12"], "visit_team": ["Play-Off", "L13"], "local_score": ["Play-Off", "M12"], "visit_score": ["Play-Off", "M13"]}
+        },
+        "62": {
+            "data": {"local_team": ["Play-Off", "L28"], "visit_team": ["Play-Off", "L29"], "local_score": ["Play-Off", "M28"], "visit_score": ["Play-Off", "M29"]}
+        },
+        "63": {
+            "data": {"local_team": ["Play-Off", "Q29"], "visit_team": ["Play-Off", "Q30"], "local_score": ["Play-Off", "R29"], "visit_score": ["Play-Off", "R30"]}
+        },
+        "64": {
+            "data": {"local_team": ["Play-Off", "Q20"], "visit_team": ["Play-Off", "Q21"], "local_score": ["Play-Off", "R20"], "visit_score": ["Play-Off", "R21"]}
+        }
+    }
+}
