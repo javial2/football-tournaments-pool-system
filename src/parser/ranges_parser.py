@@ -33,7 +33,7 @@ def _search_for_value(workbook, value):
     # If the value is not found, return None
     return None
 
-def generate_ranges(filename, games = []):
+def generate_ranges(filename, games = [], save_folder = ''):
     # Open workbook
     workbook = load_workbook(filename=filename, data_only = True)
     games_ranges = {}
@@ -52,5 +52,5 @@ def generate_ranges(filename, games = []):
         "champion": _search_for_value(workbook, CHAMPION_KEY),
         "games": games_ranges
     }
-    with open('instances/Test Mundial Qatar 2022/config/ranges.json', "w") as file:
+    with open('{}/ranges.json'.format(save_folder), "w") as file:
         json.dump(ranges, file)
