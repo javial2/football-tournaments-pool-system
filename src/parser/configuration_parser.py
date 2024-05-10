@@ -8,7 +8,7 @@ def generate_configuration(filename, save_folder = ''):
     configuration = {row[0].value: row[1].value for row in configuration_sheet['B2:C4']}
     tables = configuration_sheet.tables
     stages = [s[0].value for s in configuration_sheet[tables['Table7'].ref][1:]]
-    games = {r[0].value: r[1].value for r in configuration_sheet[tables['Table8'].ref][1:]}
+    games = {str(r[0].value): r[1].value for r in configuration_sheet[tables['Table8'].ref][1:]}
     
     tournament_configuration = {
         "tournament_name": configuration['Tournament Name'],
@@ -18,8 +18,8 @@ def generate_configuration(filename, save_folder = ''):
         "results_xlsx": configuration["Results Filename"],
         "ranges_xlsx": configuration["Ranges Filename"],
         "tournament_stages": {
-            s: {
-                "nid": s,
+            format_names(s): {
+                "nid": format_names(s),
                 "order": stages.index(s) + 1,
                 "games": [g for g in games.keys() if s == games[g]]
             } for s in stages
@@ -28,3 +28,16 @@ def generate_configuration(filename, save_folder = ''):
 
     with open('{}/tournament_configuration.json'.format(save_folder), "w") as file:
         json.dump(tournament_configuration, file)
+
+def format_names(text=''):
+    text = text.lower()
+    text = text.replace(' ', '-')
+    text = text.replace('á', 'a')
+    text = text.replace('é', 'e')
+    text = text.replace('í', 'i')
+    text = text.replace('ó', 'o')
+    text = text.replace('ú', 'u')
+    
+    return text 
+
+#generate_configuration('instances/Test Mundial Qatar 2022/CONFIGURATION.xlsx', save_folder='instances/Test Mundial Qatar 2022/config')
