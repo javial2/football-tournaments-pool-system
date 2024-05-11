@@ -5,6 +5,7 @@ import os
 
 def start_menu():
     menu = '''
+    ----------------------------------------------------------
         (1) Cargar Torneo.
         (2) Crear Nuevo Torneo.
         (3) Salir.
@@ -22,6 +23,7 @@ def start_menu():
 
 def main_menu(T):
     menu = '''
+    ----------------------------------------------------------
         (1) Actualizar jugadores.
         (2) Actualizar resultados.
         (3) Estadísticas.
@@ -55,6 +57,7 @@ def main_menu(T):
 
 def stats_menu(T):
     menu = '''
+    ----------------------------------------------------------
         (1) Estadísticas del torneo.
         (2) Estadísticas de una fase.
         (3) Estadísticas de un partido.
@@ -99,8 +102,9 @@ def load_menu():
         return
     options = {'{}'.format(i+1): instance for i, instance in enumerate(instances)}
     menu = '''
+    ----------------------------------------------------------
     Escoja una instancia para cargar.
-        (0) Ingresar nombre. '''
+        (0)  Ingresar nombre. '''
     for n in options.keys():
         menu += '''
         ({})  {}. '''.format(n, options[n])
