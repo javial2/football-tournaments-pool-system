@@ -1,3 +1,25 @@
+from src.tournament import Tournament
+from src.utils.create_and_load_tournament import load_tournament
+
+import os
+
+def start_menu():
+    menu = '''
+        (1) Cargar Torneo.
+        (2) Crear Nuevo Torneo.
+        (3) Salir.
+    Elija una acción: '''
+    o = input(menu)
+    while o not in '123':
+        print('Opción elegida no válida. Intente nuevamente.')
+        o = input()
+    if o == '1':
+        return load_menu()
+    elif o == '2':
+        pass
+    elif o == '3':
+        return
+
 def main_menu(T):
     menu = '''
         (1) Actualizar jugadores.
@@ -67,3 +89,31 @@ def stats_menu(T):
         pass
     elif o == '5':
         main_menu(T)
+
+def load_menu():
+    path = 'instances/'
+    instances = [instance for instance in os.listdir(path) if os.path.isdir(os.path.join(path, instance))]
+    if len(instances) == 0:
+        print("No hay torneos para cargar.")
+        start_menu()
+        return
+    options = {'{}'.format(i+1): instance for i, instance in enumerate(instances)}
+    menu = '''
+    Escoja una instancia para cargar.
+        (0) Ingresar nombre. '''
+    for n in options.keys():
+        menu += '''
+        ({})  {}. '''.format(n, options[n])
+    menu += '''
+        ({}) Salir.
+    Escoja un torneo para cargar: '''.format(len(options) + 1)
+    o = input(menu)
+    while o not in options.keys() and o != str(len(options) + 1):
+        print('Opción elegida no válida. Intente nuevamente.')
+        o = input()
+    if o == '0':
+        return
+    if o == str(len(options) + 1):
+        return
+    else:
+        return load_tournament(instance_name=options[o])

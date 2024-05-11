@@ -71,6 +71,7 @@ def generate_points_configuration(filename, stages = [], save_folder = ''):
     
     with open('{}/points.json'.format(save_folder), "w") as file:
         json.dump(points_configuration, file)
+    return points_configuration
 
 def format_names(text=''):
     text = text.lower()

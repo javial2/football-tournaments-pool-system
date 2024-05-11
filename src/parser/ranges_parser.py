@@ -54,3 +54,4 @@ def generate_ranges(filename, games = [], save_folder = ''):
     }
     with open('{}/ranges.json'.format(save_folder), "w") as file:
         json.dump(ranges, file)
+    return ranges

@@ -28,6 +28,7 @@ def generate_configuration(filename, save_folder = ''):
 
     with open('{}/tournament_configuration.json'.format(save_folder), "w") as file:
         json.dump(tournament_configuration, file)
+    return tournament_configuration
 
 def format_names(text=''):
     text = text.lower()
