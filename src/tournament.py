@@ -132,9 +132,11 @@ class Tournament:
 
     def __repr__(self):
         string = '''
+        --------------------------
         Tournament: {}
         Number of players: {}
         Number of games: {}
+        --------------------------
         '''.format(self.name, len(self.players), self.number_of_games())
         return string
 

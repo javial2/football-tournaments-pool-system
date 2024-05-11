@@ -1,22 +1,17 @@
 from src.tournament import Tournament
 import src.utils.menus as mn
+from src.utils.create_and_load_tournament import load_tournament
 
 import json
 from argparse import ArgumentParser
 
 def run(instance_name):
-    path = "./instances/{}".format(instance_name)
-    #Load tournament configuration
-    with open('{}/config/tournament_configuration.json'.format(path)) as json_file:
-        config_data = json.load(json_file)
-    #Load ranges
-    with open('{}/config/ranges.json'.format(path)) as json_file:
-        ranges_data = json.load(json_file)
-    #Load tournament point system
-    with open('{}/config/points.json'.format(path)) as json_file:
-        points_system = json.load(json_file)
-    #Create tournament
-    T = Tournament(path, config_data, ranges_data, points_system['tournament'])
+    if instance_name == None:
+        T = mn.load_menu()
+        if T == None:
+            return
+    else:
+        T = load_tournament(instance_name)
     #Create tournament databases, if does not exist
     T.initialize()
     if not T.valid:
@@ -51,8 +46,7 @@ if __name__ == "__main__":
         "--instance", 
         "-i", 
         help="Instance name in ./instances/", 
-        type=str,
-        default="Mundial Qatar 2022 Familiar"
+        type=str
     )
     args = parser.parse_args()
 
