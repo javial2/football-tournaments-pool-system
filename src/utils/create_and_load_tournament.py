@@ -52,3 +52,5 @@ def check_folder_structure(instance_name):
         os.mkdir(path + '/database')
     if 'stats' not in os.listdir(path):
         os.mkdir(path + '/stats')
+    if 'players_files' not in os.listdir(path):
+        os.mkdir(path + '/players_files')
