@@ -6,6 +6,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 import copy
+from ..utils.utils import upload_rank_to_drive
 
 COLOR_BY_STAGE = {
     'finals': 'gold',
@@ -42,7 +43,7 @@ def plot_format(save_as = '', xlabel = '', ylabel = '', title = '', legend = Non
         plt.savefig(save_as, bbox_inches='tight')
         plt.clf()
 
-def ranking(players, export_to_file = True, folder_path = ''):
+def ranking(players, export_to_file = True, folder_path = '', upload_to_drive = False, drive_config = {}):
     headers = ['rank', 'name', 'points']
     if export_to_file:
         file_writer = open('{}/stats/ranking.csv'.format(folder_path),'w',newline='')
@@ -66,6 +67,8 @@ def ranking(players, export_to_file = True, folder_path = ''):
         last_rank = deepcopy(r)
         i += 1
     file_writer.close()
+    if upload_to_drive == True:
+        upload_rank_to_drive(ranked_list, config = drive_config)
 
 def predicted_teams_by_stages(players, tournament, folder_path = ''):
     avoid_stages = ['third_place', 'groups']

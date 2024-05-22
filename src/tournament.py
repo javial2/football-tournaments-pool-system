@@ -125,7 +125,9 @@ class Tournament:
                     p.points += g.game_points(p)
 
     def update_ranking(self):
-        sc.ranking(self.players, folder_path=self.path)
+        drive_configurations = self.configurations['drive_configuration'] if 'drive_configuration' in self.configurations.keys() else {}
+        upload_to_drive = self.configurations['upload_rank_to_drive'] if 'upload_rank_to_drive' in self.configurations.keys() or drive_configurations == {} else False
+        sc.ranking(self.players, folder_path=self.path, upload_to_drive=upload_to_drive, drive_config=drive_configurations)
 
     def tournament_stats(self):
         sc.predicted_teams_by_stages(self.players, self, self.path)

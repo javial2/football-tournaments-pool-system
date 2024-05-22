@@ -17,6 +17,12 @@ def generate_configuration(filename, save_folder = ''):
         "stats_folder": "stats/",
         "results_xlsx": configuration["Results Filename"],
         "ranges_xlsx": configuration["Ranges Filename"],
+        "upload_rank_to_drive": configuration_sheet['C7'].value,
+        "drive_configuration": {
+            'sheet_id': configuration_sheet['C8'].value,
+            'sheet_name': configuration_sheet['C9'].value,
+            'credentials_filename': configuration_sheet['C10'].value
+        },
         "tournament_stages": {
             format_names(s): {
                 "nid": format_names(s),
