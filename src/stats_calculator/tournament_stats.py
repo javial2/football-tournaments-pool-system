@@ -9,13 +9,6 @@ import copy
 
 from src.utils.utils import printable_names
 
-COLOR_BY_STAGE = {
-    'final': 'gold',
-    'semi-final': 'silver',
-    'cuartos-de-final': '#CD853F',
-    'octavos-de-final': 'blue'
-}
-
 def sum_lists(matrix):
     i = 0
     l = matrix[0]
@@ -67,6 +60,9 @@ def predicted_teams_by_stages(players, tournament, folder_path = ''):
     stages = [s for s in tournament.stages.values() if s.nid not in avoid_stages]
     stages.sort(key=lambda x: x.order, reverse=True)
     title = 'Clasificados a Play-Off'
+    colors = {}
+    for s, c in zip(stages, plt.cm.tab10.colors):
+        colors[s.nid] = c
     teams = tournament.teams_in_tournament()
     values_v2 = {t: {s.nid: 0 for s in stages} for t in teams}
     for p in players.values():
@@ -88,11 +84,11 @@ def predicted_teams_by_stages(players, tournament, folder_path = ''):
     while i < len(stages):
         s = stages_copy[0]
         sorted_values = [sum([values_v2[t][st.nid] for st in stages_copy]) for t in sorted_teams_v2]
-        plt.barh(sorted_teams_v2, sorted_values, align='center', color=COLOR_BY_STAGE[s.nid])
+        plt.barh(sorted_teams_v2, sorted_values, align='center', color=colors[s.nid])
         stages_copy.remove(s)
         i += 1
     plt.yticks(sorted_teams_v2)
-    color_labels = [printable_names(c) for c in COLOR_BY_STAGE]
-    handles = [plt.Rectangle((0,0),1,1, color=COLOR_BY_STAGE[c]) for c in COLOR_BY_STAGE]
+    color_labels = [printable_names(c) for c in colors]
+    handles = [plt.Rectangle((0,0),1,1, color=colors[c]) for c in colors]
     save_as = '{}/stats/{}_barchart.png'.format(folder_path, title)
     plot_format(save_as = save_as, legend = (handles, color_labels), title = title)
