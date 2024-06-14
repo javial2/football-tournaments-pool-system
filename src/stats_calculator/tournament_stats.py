@@ -7,19 +7,7 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 import copy
 
-COLOR_BY_STAGE = {
-    'finals': 'gold',
-    'top_4': 'silver',
-    'top_8': '#CD853F',
-    'top_16': 'blue'
-}
-
-LABEL_BY_STAGE = {
-    'finals': 'Final',
-    'top_4': 'Semi Final',
-    'top_8': 'Cuartos de Final',
-    'top_16': 'Octavos de Final'
-}
+from src.utils.utils import printable_names
 
 def sum_lists(matrix):
     i = 0
@@ -68,10 +56,13 @@ def ranking(players, export_to_file = True, folder_path = ''):
     file_writer.close()
 
 def predicted_teams_by_stages(players, tournament, folder_path = ''):
-    avoid_stages = ['third_place', 'groups']
+    avoid_stages = ['tercer-y-cuarto-lugar', 'grupos', 'third-place', 'groups']
     stages = [s for s in tournament.stages.values() if s.nid not in avoid_stages]
     stages.sort(key=lambda x: x.order, reverse=True)
     title = 'Clasificados a Play-Off'
+    colors = {}
+    for s, c in zip(stages, plt.cm.tab10.colors):
+        colors[s.nid] = c
     teams = tournament.teams_in_tournament()
     values_v2 = {t: {s.nid: 0 for s in stages} for t in teams}
     for p in players.values():
@@ -93,11 +84,11 @@ def predicted_teams_by_stages(players, tournament, folder_path = ''):
     while i < len(stages):
         s = stages_copy[0]
         sorted_values = [sum([values_v2[t][st.nid] for st in stages_copy]) for t in sorted_teams_v2]
-        plt.barh(sorted_teams_v2, sorted_values, align='center', color=COLOR_BY_STAGE[s.nid])
+        plt.barh(sorted_teams_v2, sorted_values, align='center', color=colors[s.nid])
         stages_copy.remove(s)
         i += 1
     plt.yticks(sorted_teams_v2)
-    color_labels = [LABEL_BY_STAGE[c] for c in COLOR_BY_STAGE]
-    handles = [plt.Rectangle((0,0),1,1, color=COLOR_BY_STAGE[c]) for c in COLOR_BY_STAGE]
+    color_labels = [printable_names(c) for c in colors]
+    handles = [plt.Rectangle((0,0),1,1, color=colors[c]) for c in colors]
     save_as = '{}/stats/{}_barchart.png'.format(folder_path, title)
     plot_format(save_as = save_as, legend = (handles, color_labels), title = title)
