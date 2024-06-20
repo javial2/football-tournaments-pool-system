@@ -129,6 +129,7 @@ class Tournament:
 
     def tournament_stats(self):
         sc.predicted_teams_by_stages(self.players, self, self.path)
+        #sc.ranking_evolution(self, self.path)
 
     def __repr__(self):
         string = '''

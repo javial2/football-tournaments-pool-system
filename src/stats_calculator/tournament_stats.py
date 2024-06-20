@@ -6,6 +6,9 @@ from matplotlib.patches import PathPatch
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 import copy
+import pandas as pd
+from matplotlib.animation import FuncAnimation
+import seaborn as sns
 
 from src.utils.utils import printable_names
 
@@ -92,3 +95,65 @@ def predicted_teams_by_stages(players, tournament, folder_path = ''):
     handles = [plt.Rectangle((0,0),1,1, color=colors[c]) for c in colors]
     save_as = '{}/stats/{}_barchart.png'.format(folder_path, title)
     plot_format(save_as = save_as, legend = (handles, color_labels), title = title)
+
+def ranking_evolution(tournament, folder_path = ''):
+    data = {}
+    players = []
+    for p in tournament.players.values():
+        players.append(p.name)
+        points_array = []
+        points = 0
+        for s in tournament.stages.values():
+            points += s.stage_points(p)
+            points_array.append(points)
+            for g in s.games.values():
+                points += g.game_points(p)
+                points_array.append(points)
+        points += tournament.tournament_points(p)
+        points_array.append(points)
+        data[p.name] = points_array
+
+    df = pd.DataFrame(data)
+
+    # Asign colors to players
+    player_colors = sns.color_palette("tab20", n_colors=len(players))
+    colors = {jugador: player_colors[i] for i, jugador in enumerate(players)}
+    # Get max score to set X Axis
+    max_score = df.iloc[:, 1:].max().max()
+
+    # Define una función para actualizar la gráfica en cada fotograma
+    def update(frame):
+        plt.cla()  # Borra la gráfica anterior
+        sorted_scores = df.iloc[frame, 1:].sort_values(ascending=False)  # Ordena los puntajes del frame actual de mayor a menor
+        # Crear el gráfico de barras horizontal
+        bars = plt.barh(sorted_scores.index[::-1], sorted_scores.values[::-1], color=[colors[jugador] for jugador in sorted_scores.index[::-1]], alpha=0.2)  # Establecer transparencia para todas las barras
+        
+        # Resaltar jugadores especificados
+        highlighted_players = ["Joaquín Moreno", "Tomas Mackenney", "José Antonio Vial", "Cristóbal Vial"]  # Puedes cambiar esto por una lista de jugadores que desees resaltar
+        if highlighted_players:
+            for bar, jugador in zip(bars, sorted_scores.index[::-1]):
+                if jugador in highlighted_players:
+                    bar.set_edgecolor('gold')  # Cambia el color de borde a dorado para resaltar el jugador
+                    bar.set_linewidth(2)  # Aumenta el ancho del borde para hacer el resaltado más notorio
+                    bar.set_alpha(1.0)  # Establecer opacidad completa para el jugador resaltado
+                    #plt.text(max_score * 1.02, len(sorted_scores) - sorted_scores.index.get_loc(jugador) - 0.5, jugador, ha='left', va='center', fontsize=8, color='black', fontweight='bold')  # Resaltar nombre del jugador en el eje
+                else:
+                    bar.set_alpha(0.2)  # Establecer transparencia para las barras no resaltadas
+        else:
+            for bar in bars:
+                bar.set_alpha(1.0)  # Establecer opacidad completa si no hay jugadores resaltados
+        plt.xlabel('Puntaje acumulado')
+        plt.ylabel('Jugador')
+        plt.title('Evolución del ranking de los jugadores')
+        plt.xlim(0, max_score)  # Fijar límites en el eje x
+        #plt.ylim(-0.5, len(sorted_scores) - 0.5)  # Fijar límites en el eje y
+        plt.text(max_score * 1.02, len(sorted_scores) - 0.5, f'Frame: {frame + 1}', ha='left', va='center', fontsize=10, color='gray')  # Agregar el número de frame a la derecha
+        plt.gca().tick_params(axis='y', which='both', left=False, labelleft=True)  # Eliminar los ticks y etiquetas del eje y
+        plt.tight_layout()
+
+    # Crea una animación utilizando FuncAnimation
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ani = FuncAnimation(fig, update, frames=len(list(data.values())[0]), interval=1000)  # Intervalo de actualización en milisegundos
+    #ani.save('{}/stats/evolucion_ranking.mp4'.format(folder_path), fps=2)
+
+    plt.show()
