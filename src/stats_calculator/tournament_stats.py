@@ -92,3 +92,20 @@ def predicted_teams_by_stages(players, tournament, folder_path = ''):
     handles = [plt.Rectangle((0,0),1,1, color=colors[c]) for c in colors]
     save_as = '{}/stats/{}_barchart.png'.format(folder_path, title)
     plot_format(save_as = save_as, legend = (handles, color_labels), title = title)
+
+def predicted_champions(players, tournament, folder_path = ''):
+    title = 'Campeones'
+    data = {}
+    for p in players:
+        champion = players[p].data['champion']
+        if champion not in data.keys():
+            data[champion] = 0
+        data[champion] += 1
+    sorted_pairs = sorted(data.items(), key=lambda x: x[1])
+    labels = [k for k, v in sorted_pairs]
+    size = [data[l] for l in labels]
+    plt.barh(labels, size, align='center', alpha=0.5)
+    plt.yticks(labels)
+    save_as = '{}/stats/{}_barchart.png'.format(folder_path, title)
+    plot_format(save_as = save_as, title = title)
+        
