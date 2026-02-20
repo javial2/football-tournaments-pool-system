@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Pool</title>
+  <style>
+    :root {
+      --bg:         #f0f2f0;
+      --surface:    #ffffff;
+      --primary:    #1a472a;
+      --primary-lt: #2d6a42;
+      --accent:     #ffd700;
+      --text:       #1a1a1a;
+      --muted:      #666666;
+      --border:     #d8dbd8;
+      --win:        #c8f0d0;
+      --win-text:   #1a6b30;
+      --shadow:     0 2px 8px rgba(0,0,0,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: var(--shadow);
+    }
+    header .ball { font-size: 1.6rem; }
+    header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.02em; }
+
+    /* ── Tab nav ── */
+    nav#tab-nav {
+      background: var(--primary);
+      display: flex;
+      border-top: 1px solid var(--primary-lt);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.7rem 0.5rem;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover  { color: #fff; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Main content ── */
+    main { padding: 1.25rem 1rem; max-width: 1100px; margin: 0 auto; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary); }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: var(--primary); }
+
+    /* ── Tables ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      font-size: 0.88rem;
+    }
+    .data-table th {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:nth-child(even) { background: #f7f9f7; }
+    .data-table tbody tr:hover { background: #edf3ee; }
+
+    .pts { font-weight: 700; text-align: right; }
+    .pts-positive { background: var(--win) !important; color: var(--win-text); font-weight: 700; }
+    .rank-medal { font-weight: 800; font-size: 1rem; }
+
+    /* ── Player link buttons ── */
+    .player-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: inherit;
+      padding: 0;
+      text-decoration: underline dotted;
+      text-underline-offset: 2px;
+    }
+    .player-link:hover { color: var(--primary-lt); }
+
+    /* ── Matches tab ── */
+    details {
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    details > summary {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+    details > summary::before {
+      content: "▶";
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    details[open] > summary::before { transform: rotate(90deg); }
+    details > summary .badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+
+    .game-card {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .game-card:last-child { border-bottom: none; }
+    .game-card h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--primary);
+    }
+
+    .pred-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .pred-table th {
+      background: #e8f0e9;
+      color: var(--primary);
+      padding: 0.35rem 0.6rem;
+      text-align: center;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .pred-table td {
+      padding: 0.35rem 0.6rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .pred-table tbody tr:last-child td { border-bottom: none; }
+    .real-score { font-weight: 700; background: #f0f7f1; }
+    .not-played { color: var(--muted); font-style: italic; }
+
+    /* ── Stages tab ── */
+    .stage-block {
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .stage-block h3 { margin-top: 0; }
+    .team-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .team-chip {
+      background: #e8f0e9;
+      color: var(--primary);
+      border: 1px solid #b8d4bc;
+      border-radius: 20px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .stage-not-started {
+      color: var(--muted);
+      font-style: italic;
+      font-size: 0.88rem;
+    }
+
+    /* ── Players tab ── */
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+    .player-card {
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 1rem 1.1rem;
+      border-top: 4px solid var(--primary);
+    }
+    .player-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    .player-card p { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+    .player-card p strong { color: var(--text); }
+    .badge-win {
+      display: inline-block;
+      background: var(--win);
+      color: var(--win-text);
+      border-radius: 10px;
+      padding: 0 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-left: 0.3rem;
+    }
+
+    /* ── Modal ── */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .modal.hidden { display: none; }
+    .modal-box {
+      background: var(--surface);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 920px;
+      padding: 1.5rem;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 2rem;
+      height: 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--bg); color: var(--text); }
+
+    .modal-header { margin-bottom: 1rem; padding-right: 2.5rem; }
+    .modal-header h2 { margin-bottom: 0.3rem; }
+    .modal-meta { font-size: 0.88rem; color: var(--muted); }
+    .modal-meta strong { color: var(--text); }
+
+    .stage-pts {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .error {
+      text-align: center;
+      padding: 2rem;
+      color: #c0392b;
+      background: #fdf0ee;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="ball">⚽</span>
+  <h1 id="tournament-name">Cargando...</h1>
+</header>
+
+<nav id="tab-nav">
+  <button class="tab-btn active" data-tab="ranking">Tabla</button>
+  <button class="tab-btn" data-tab="matches">Partidos</button>
+  <button class="tab-btn" data-tab="stages">Fases</button>
+  <button class="tab-btn" data-tab="players">Jugadores</button>
+</nav>
+
+<main>
+  <section id="tab-ranking"  class="tab-panel active"><div class="loading">Cargando datos...</div></section>
+  <section id="tab-matches"  class="tab-panel"></section>
+  <section id="tab-stages"   class="tab-panel"></section>
+  <section id="tab-players"  class="tab-panel"></section>
+</main>
+
+<div id="player-modal" class="modal hidden">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close-btn" aria-label="Cerrar">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+  // ── Module-level state ──────────────────────────────────────────────
+  let appPlayers = [];
+
+  // ── Helpers ────────────────────────────────────────────────────────
+  function formatStageName(nid) {
+    const names = {
+      groups:      'Fase de Grupos',
+      top_16:      'Octavos de Final',
+      top_8:       'Cuartos de Final',
+      top_4:       'Semifinales',
+      finals:      'Final',
+      third_place: 'Tercer Puesto'
+    };
+    return names[nid] || nid.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function fmtScore(local, visit) {
+    if (local === null || local === undefined || visit === null || visit === undefined) return null;
+    return `${local} - ${visit}`;
+  }
+
+  // ── Tab switching ───────────────────────────────────────────────────
+  function setupTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  }
+
+  // ── View 1: Rankings ────────────────────────────────────────────────
+  function renderRanking(ranking) {
+    const panel = document.getElementById('tab-ranking');
+    let html = '<h2>Tabla de Posiciones</h2>';
+    html += '<table class="data-table"><thead><tr><th>#</th><th>Jugador</th><th>Puntos</th></tr></thead><tbody>';
+
+    for (const row of ranking) {
+      const medal = row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : row.rank === 3 ? '🥉' : row.rank;
+      html += `<tr>
+        <td class="rank-medal">${medal}</td>
+        <td><button class="player-link" data-name="${esc(row.name)}">${esc(row.name)}</button></td>
+        <td class="pts">${row.points}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    panel.innerHTML = html;
+  }
+
+  // ── View 2: Matches ─────────────────────────────────────────────────
+  function renderMatches(stages, ranking) {
+    const panel = document.getElementById('tab-matches');
+    const playerNames = ranking.map(r => r.name);
+
+    let html = '<h2>Resultados y Predicciones</h2>';
+
+    for (const stage of stages) {
+      const label = formatStageName(stage.nid);
+      const badge = stage.finished ? 'Finalizada' : stage.started ? 'En curso' : 'No iniciada';
+      const openAttr = stage.order > 1 ? ' open' : '';
+
+      html += `<details${openAttr}>
+        <summary>${label} <span class="badge">${badge}</span></summary>`;
+
+      for (const game of stage.games) {
+        if (!game.local_team && !game.visit_team) continue;
+
+        const local  = game.local_team  || '?';
+        const visit  = game.visit_team  || '?';
+        const realStr = fmtScore(game.local_score, game.visit_score)
+          || '<span class="not-played">Por jugar</span>';
+
+        html += `<div class="game-card">
+          <h4>Partido ${game.id}: ${esc(local)} vs ${esc(visit)}</h4>
+          <table class="pred-table"><thead><tr>
+            <th>Resultado Real</th>`;
+
+        for (const name of playerNames) {
+          html += `<th>${esc(name)}</th>`;
+        }
+        html += '</tr></thead><tbody><tr>';
+        html += `<td class="real-score">${realStr}</td>`;
+
+        for (const name of playerNames) {
+          const pred = game.predictions.find(p => p.player_name === name);
+          if (!pred) { html += '<td>-</td>'; continue; }
+          const score = fmtScore(pred.local_score, pred.visit_score) || '-';
+          const cls   = pred.points_earned > 0 ? ' class="pts-positive"' : '';
+          html += `<td${cls}>${score}</td>`;
+        }
+        html += '</tr></tbody></table></div>';
+      }
+      html += '</details>';
+    }
+    panel.innerHTML = html;
+  }
+
+  // ── View 3: Stage progression ───────────────────────────────────────
+  function renderStages(stages) {
+    const panel = document.getElementById('tab-stages');
+    const knockoutNids = ['top_16', 'top_8', 'top_4', 'finals', 'third_place'];
+    const knockout = stages
+      .filter(s => knockoutNids.includes(s.nid))
+      .sort((a, b) => a.order - b.order);
+
+    let html = '<h2>Progresión de Fases</h2>';
+
+    for (const stage of knockout) {
+      html += `<div class="stage-block"><h3>${formatStageName(stage.nid)}</h3>`;
+      if (!stage.started) {
+        html += '<p class="stage-not-started">Aún no iniciada</p>';
+      } else {
+        const teams = new Set();
+        for (const game of stage.games) {
+          if (game.local_team)  teams.add(game.local_team);
+          if (game.visit_team)  teams.add(game.visit_team);
+        }
+        html += '<div class="team-grid">';
+        for (const team of [...teams].sort()) {
+          html += `<div class="team-chip">${esc(team)}</div>`;
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    panel.innerHTML = html;
+  }
+
+  // ── View 4: Players list ────────────────────────────────────────────
+  function renderPlayers(players, ranking) {
+    const panel = document.getElementById('tab-players');
+    const rankMap = Object.fromEntries(ranking.map(r => [r.name, r.rank]));
+
+    let html = '<h2>Jugadores</h2><div class="player-grid">';
+    const sorted = [...players].sort((a, b) => b.total_points - a.total_points);
+
+    for (const p of sorted) {
+      const champBadge = p.champion_points > 0
+        ? `<span class="badge-win">+${p.champion_points} pts</span>` : '';
+      html += `<div class="player-card">
+        <h3><button class="player-link" data-name="${esc(p.name)}">${esc(p.name)}</button></h3>
+        <p>Posición: <strong>#${rankMap[p.name] ?? '—'}</strong></p>
+        <p>Puntos: <strong>${p.total_points}</strong></p>
+        <p>Campeón: <strong>${esc(p.champion_pick || '—')}</strong>${champBadge}</p>
+      </div>`;
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  }
+
+  // ── Player detail modal ─────────────────────────────────────────────
+  function openPlayerModal(playerName) {
+    const player = appPlayers.find(p => p.name === playerName);
+    if (!player) return;
+
+    let html = `<div class="modal-header">
+      <h2>${esc(player.name)}</h2>
+      <div class="modal-meta">
+        Total: <strong>${player.total_points} pts</strong> &nbsp;|&nbsp;
+        Campeón: <strong>${esc(player.champion_pick || '—')}</strong>
+        ${player.champion_points > 0 ? `<span class="badge-win">+${player.champion_points} pts</span>` : ''}
+      </div>
+    </div>`;
+
+    for (const stage of player.stages) {
+      const stagePts = stage.stage_points > 0
+        ? `${stage.stage_points} pts clasificación` : '';
+      html += `<h3>${formatStageName(stage.nid)}
+        ${stagePts ? `<span class="stage-pts">${stagePts}</span>` : ''}
+      </h3>`;
+      html += `<table class="data-table" style="margin-bottom:0.75rem">
+        <thead><tr>
+          <th>#</th><th>Resultado Real</th><th>Tu Predicción</th><th>Pts</th>
+        </tr></thead><tbody>`;
+
+      for (const g of stage.games) {
+        const realStr = g.real_local
+          ? (fmtScore(g.real_local_score, g.real_visit_score)
+              ? `${esc(g.real_local)} ${g.real_local_score}-${g.real_visit_score} ${esc(g.real_visit)}`
+              : `${esc(g.real_local)} vs ${esc(g.real_visit)}`)
+          : '—';
+        const predStr = g.pred_local
+          ? `${esc(g.pred_local)} ${g.pred_local_score ?? '?'}-${g.pred_visit_score ?? '?'} ${esc(g.pred_visit)}`
+          : '—';
+        const ptsCls = g.points_earned > 0 ? 'pts-positive' : '';
+
+        html += `<tr>
+          <td>${g.game_id}</td>
+          <td>${realStr}</td>
+          <td>${predStr}</td>
+          <td class="pts ${ptsCls}">${g.points_earned}</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+    }
+
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('player-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePlayerModal() {
+    document.getElementById('player-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  // ── Event delegation ────────────────────────────────────────────────
+  function setupEvents() {
+    document.body.addEventListener('click', e => {
+      const btn = e.target.closest('.player-link');
+      if (btn) { openPlayerModal(btn.dataset.name); return; }
+
+      if (e.target.id === 'modal-close-btn' || e.target.id === 'player-modal') {
+        closePlayerModal();
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closePlayerModal();
+    });
+  }
+
+  // ── HTML escape ─────────────────────────────────────────────────────
+  function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Bootstrap ───────────────────────────────────────────────────────
+  async function fetchData() {
+    if (window.__DATA__) { initApp(window.__DATA__); return; }
+    try {
+      const resp = await fetch('./data.json');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      initApp(data);
+    } catch (err) {
+      document.getElementById('tab-ranking').innerHTML =
+        `<div class="error">Error al cargar data.json: ${err.message}<br>
+        Asegúrate de ejecutar <code>python web.py --instance "Nombre"</code> primero.</div>`;
+    }
+  }
+
+  function initApp(data) {
+    appPlayers = data.players;
+
+    document.title = data.tournament_name + ' — Pool';
+    document.getElementById('tournament-name').textContent = data.tournament_name;
+
+    renderRanking(data.ranking);
+    renderMatches(data.stages, data.ranking);
+    renderStages(data.stages);
+    renderPlayers(data.players, data.ranking);
+
+    setupTabs();
+    setupEvents();
+  }
+
+  fetchData();
+</script>
+<script>window.__DATA__ = {"tournament_name": "Mundial Qatar 2022", "ranking": [{"rank": 1, "name": "Joaquín Moreno", "points": 79}, {"rank": 2, "name": "José Antonio Vial", "points": 73}], "stages": [{"nid": "groups", "order": 1, "started": true, "finished": true, "games": [{"id": "1", "local_team": "Senegal", "visit_team": "Holanda", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Senegal", "visit_team": "Holanda", "local_score": 1, "visit_score": 2, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Senegal", "visit_team": "Holanda", "local_score": 0, "visit_score": 2, "points_earned": 3}]}, {"id": "2", "local_team": "Qatar", "visit_team": "Ecuador", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Qatar", "visit_team": "Ecuador", "local_score": 0, "visit_score": 1, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Qatar", "visit_team": "Ecuador", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "3", "local_team": "Inglaterra", "visit_team": "Iran", "local_score": 6, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Inglaterra", "visit_team": "Iran", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Inglaterra", "visit_team": "Iran", "local_score": 2, "visit_score": 0, "points_earned": 1}]}, {"id": "4", "local_team": "USA", "visit_team": "Gales", "local_score": 1, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "USA", "visit_team": "Gales", "local_score": 0, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "USA", "visit_team": "Gales", "local_score": 2, "visit_score": 1, "points_earned": 0}]}, {"id": "5", "local_team": "Mexico", "visit_team": "Polonia", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Mexico", "visit_team": "Polonia", "local_score": 0, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Mexico", "visit_team": "Polonia", "local_score": 2, "visit_score": 1, "points_earned": 0}]}, {"id": "6", "local_team": "Argentina", "visit_team": "Arabia Saudita", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Argentina", "visit_team": "Arabia Saudita", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Argentina", "visit_team": "Arabia Saudita", "local_score": 3, "visit_score": 0, "points_earned": 0}]}, {"id": "7", "local_team": "Dinamarca", "visit_team": "Tunez", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Dinamarca", "visit_team": "Tunez", "local_score": 2, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Dinamarca", "visit_team": "Tunez", "local_score": 3, "visit_score": 0, "points_earned": 0}]}, {"id": "8", "local_team": "Francia", "visit_team": "Australia", "local_score": 4, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Francia", "visit_team": "Australia", "local_score": 1, "visit_score": 0, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Francia", "visit_team": "Australia", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "9", "local_team": "Alemania", "visit_team": "Japon", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Alemania", "visit_team": "Japon", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Alemania", "visit_team": "Japon", "local_score": 2, "visit_score": 1, "points_earned": 0}]}, {"id": "10", "local_team": "España", "visit_team": "Costa Rica", "local_score": 7, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "España", "visit_team": "Costa Rica", "local_score": 1, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "España", "visit_team": "Costa Rica", "local_score": 1, "visit_score": 0, "points_earned": 2}]}, {"id": "11", "local_team": "Marruecos", "visit_team": "Croacia", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Marruecos", "visit_team": "Croacia", "local_score": 1, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Marruecos", "visit_team": "Croacia", "local_score": 1, "visit_score": 2, "points_earned": 0}]}, {"id": "12", "local_team": "Belgica", "visit_team": "Canada", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Belgica", "visit_team": "Canada", "local_score": 3, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Belgica", "visit_team": "Canada", "local_score": 3, "visit_score": 0, "points_earned": 2}]}, {"id": "13", "local_team": "Suiza", "visit_team": "Camerun", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Suiza", "visit_team": "Camerun", "local_score": 1, "visit_score": 0, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "Suiza", "visit_team": "Camerun", "local_score": 1, "visit_score": 0, "points_earned": 3}]}, {"id": "14", "local_team": "Brasil", "visit_team": "Serbia", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Brasil", "visit_team": "Serbia", "local_score": 2, "visit_score": 0, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "Brasil", "visit_team": "Serbia", "local_score": 3, "visit_score": 1, "points_earned": 1}]}, {"id": "15", "local_team": "Uruguay", "visit_team": "Corea", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Uruguay", "visit_team": "Corea", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Uruguay", "visit_team": "Corea", "local_score": 1, "visit_score": 0, "points_earned": 0}]}, {"id": "16", "local_team": "Portugal", "visit_team": "Gana", "local_score": 3, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Portugal", "visit_team": "Gana", "local_score": 1, "visit_score": 0, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Portugal", "visit_team": "Gana", "local_score": 2, "visit_score": 1, "points_earned": 1}]}, {"id": "17", "local_team": "Qatar", "visit_team": "Senegal", "local_score": 1, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Qatar", "visit_team": "Senegal", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Qatar", "visit_team": "Senegal", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "18", "local_team": "Holanda", "visit_team": "Ecuador", "local_score": 1, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Holanda", "visit_team": "Ecuador", "local_score": 1, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Holanda", "visit_team": "Ecuador", "local_score": 1, "visit_score": 1, "points_earned": 3}]}, {"id": "19", "local_team": "Gales", "visit_team": "Iran", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Gales", "visit_team": "Iran", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Gales", "visit_team": "Iran", "local_score": 1, "visit_score": 0, "points_earned": 0}]}, {"id": "20", "local_team": "Inglaterra", "visit_team": "USA", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Inglaterra", "visit_team": "USA", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Inglaterra", "visit_team": "USA", "local_score": 1, "visit_score": 1, "points_earned": 1}]}, {"id": "21", "local_team": "Polonia", "visit_team": "Arabia Saudita", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Polonia", "visit_team": "Arabia Saudita", "local_score": 0, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Polonia", "visit_team": "Arabia Saudita", "local_score": 1, "visit_score": 0, "points_earned": 2}]}, {"id": "22", "local_team": "Argentina", "visit_team": "Mexico", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Argentina", "visit_team": "Mexico", "local_score": 3, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Argentina", "visit_team": "Mexico", "local_score": 2, "visit_score": 1, "points_earned": 2}]}, {"id": "23", "local_team": "Tunez", "visit_team": "Australia", "local_score": 0, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Tunez", "visit_team": "Australia", "local_score": 1, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Tunez", "visit_team": "Australia", "local_score": 1, "visit_score": 2, "points_earned": 1}]}, {"id": "24", "local_team": "Francia", "visit_team": "Dinamarca", "local_score": 2, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Francia", "visit_team": "Dinamarca", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Francia", "visit_team": "Dinamarca", "local_score": 0, "visit_score": 2, "points_earned": 0}]}, {"id": "25", "local_team": "Japon", "visit_team": "Costa Rica", "local_score": 0, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Japon", "visit_team": "Costa Rica", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Japon", "visit_team": "Costa Rica", "local_score": 1, "visit_score": 0, "points_earned": 0}]}, {"id": "26", "local_team": "España", "visit_team": "Alemania", "local_score": 1, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "España", "visit_team": "Alemania", "local_score": 1, "visit_score": 1, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "España", "visit_team": "Alemania", "local_score": 0, "visit_score": 3, "points_earned": 0}]}, {"id": "27", "local_team": "Belgica", "visit_team": "Marruecos", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Belgica", "visit_team": "Marruecos", "local_score": 2, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Belgica", "visit_team": "Marruecos", "local_score": 3, "visit_score": 1, "points_earned": 0}]}, {"id": "28", "local_team": "Croacia", "visit_team": "Canada", "local_score": 4, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Croacia", "visit_team": "Canada", "local_score": 2, "visit_score": 0, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Croacia", "visit_team": "Canada", "local_score": 2, "visit_score": 0, "points_earned": 1}]}, {"id": "29", "local_team": "Camerun", "visit_team": "Serbia", "local_score": 3, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Camerun", "visit_team": "Serbia", "local_score": 0, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Camerun", "visit_team": "Serbia", "local_score": 1, "visit_score": 2, "points_earned": 0}]}, {"id": "30", "local_team": "Brasil", "visit_team": "Suiza", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Brasil", "visit_team": "Suiza", "local_score": 1, "visit_score": 0, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "Brasil", "visit_team": "Suiza", "local_score": 3, "visit_score": 0, "points_earned": 2}]}, {"id": "31", "local_team": "Corea", "visit_team": "Gana", "local_score": 2, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Corea", "visit_team": "Gana", "local_score": 2, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Corea", "visit_team": "Gana", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "32", "local_team": "Portugal", "visit_team": "Uruguay", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Portugal", "visit_team": "Uruguay", "local_score": 0, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Portugal", "visit_team": "Uruguay", "local_score": 0, "visit_score": 1, "points_earned": 0}]}, {"id": "33", "local_team": "Ecuador", "visit_team": "Senegal", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Ecuador", "visit_team": "Senegal", "local_score": 0, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Ecuador", "visit_team": "Senegal", "local_score": 2, "visit_score": 0, "points_earned": 0}]}, {"id": "34", "local_team": "Holanda", "visit_team": "Qatar", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Holanda", "visit_team": "Qatar", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Holanda", "visit_team": "Qatar", "local_score": 3, "visit_score": 1, "points_earned": 1}]}, {"id": "35", "local_team": "Gales", "visit_team": "Inglaterra", "local_score": 0, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Gales", "visit_team": "Inglaterra", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Gales", "visit_team": "Inglaterra", "local_score": 0, "visit_score": 0, "points_earned": 0}]}, {"id": "36", "local_team": "Iran", "visit_team": "USA", "local_score": 0, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Iran", "visit_team": "USA", "local_score": 0, "visit_score": 2, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Iran", "visit_team": "USA", "local_score": 0, "visit_score": 1, "points_earned": 3}]}, {"id": "37", "local_team": "Polonia", "visit_team": "Argentina", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Polonia", "visit_team": "Argentina", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Polonia", "visit_team": "Argentina", "local_score": 0, "visit_score": 3, "points_earned": 2}]}, {"id": "38", "local_team": "Arabia Saudita", "visit_team": "Mexico", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Arabia Saudita", "visit_team": "Mexico", "local_score": 1, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Arabia Saudita", "visit_team": "Mexico", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "39", "local_team": "Tunez", "visit_team": "Francia", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Tunez", "visit_team": "Francia", "local_score": 1, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Tunez", "visit_team": "Francia", "local_score": 1, "visit_score": 2, "points_earned": 0}]}, {"id": "40", "local_team": "Australia", "visit_team": "Dinamarca", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Australia", "visit_team": "Dinamarca", "local_score": 0, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Australia", "visit_team": "Dinamarca", "local_score": 0, "visit_score": 1, "points_earned": 0}]}, {"id": "41", "local_team": "Japon", "visit_team": "España", "local_score": 2, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Japon", "visit_team": "España", "local_score": 1, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Japon", "visit_team": "España", "local_score": 1, "visit_score": 2, "points_earned": 0}]}, {"id": "42", "local_team": "Costa Rica", "visit_team": "Alemania", "local_score": 2, "visit_score": 4, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Costa Rica", "visit_team": "Alemania", "local_score": 0, "visit_score": 3, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Costa Rica", "visit_team": "Alemania", "local_score": 0, "visit_score": 2, "points_earned": 1}]}, {"id": "43", "local_team": "Croacia", "visit_team": "Belgica", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Croacia", "visit_team": "Belgica", "local_score": 1, "visit_score": 1, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Croacia", "visit_team": "Belgica", "local_score": 1, "visit_score": 1, "points_earned": 1}]}, {"id": "44", "local_team": "Canada", "visit_team": "Marruecos", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Canada", "visit_team": "Marruecos", "local_score": 0, "visit_score": 2, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Canada", "visit_team": "Marruecos", "local_score": 2, "visit_score": 1, "points_earned": 0}]}, {"id": "45", "local_team": "Serbia", "visit_team": "Suiza", "local_score": 2, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Serbia", "visit_team": "Suiza", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Serbia", "visit_team": "Suiza", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "46", "local_team": "Camerun", "visit_team": "Brasil", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Camerun", "visit_team": "Brasil", "local_score": 0, "visit_score": 3, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Camerun", "visit_team": "Brasil", "local_score": 0, "visit_score": 3, "points_earned": 0}]}, {"id": "47", "local_team": "Gana", "visit_team": "Uruguay", "local_score": 0, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Gana", "visit_team": "Uruguay", "local_score": 0, "visit_score": 1, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Gana", "visit_team": "Uruguay", "local_score": 0, "visit_score": 1, "points_earned": 2}]}, {"id": "48", "local_team": "Corea", "visit_team": "Portugal", "local_score": 2, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Corea", "visit_team": "Portugal", "local_score": 1, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Corea", "visit_team": "Portugal", "local_score": 1, "visit_score": 3, "points_earned": 0}]}]}, {"nid": "top_16", "order": 2, "started": true, "finished": true, "games": [{"id": "49", "local_team": "Holanda", "visit_team": "USA", "local_score": 3, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Holanda", "visit_team": "Gales", "local_score": 2, "visit_score": 1, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "Holanda", "visit_team": "Inglaterra", "local_score": 2, "visit_score": 1, "points_earned": 3}]}, {"id": "50", "local_team": "Argentina", "visit_team": "Australia", "local_score": 2, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Argentina", "visit_team": "Francia", "local_score": 2, "visit_score": 1, "points_earned": 4}, {"player_name": "José Antonio Vial", "local_team": "Argentina", "visit_team": "Australia", "local_score": 3, "visit_score": 0, "points_earned": 3}]}, {"id": "51", "local_team": "Inglaterra", "visit_team": "Senegal", "local_score": 3, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Inglaterra", "visit_team": "Ecuador", "local_score": 1, "visit_score": 1, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "USA", "visit_team": "Ecuador", "local_score": 1, "visit_score": 1, "points_earned": 0}]}, {"id": "52", "local_team": "Francia", "visit_team": "Polonia", "local_score": 3, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Dinamarca", "visit_team": "Polonia", "local_score": 2, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Dinamarca", "visit_team": "Mexico", "local_score": 3, "visit_score": 0, "points_earned": 0}]}, {"id": "53", "local_team": "Japon", "visit_team": "Croacia", "local_score": 1, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Alemania", "visit_team": "Croacia", "local_score": 1, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Alemania", "visit_team": "Croacia", "local_score": 1, "visit_score": 1, "points_earned": 4}]}, {"id": "54", "local_team": "Brasil", "visit_team": "Corea", "local_score": 4, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Brasil", "visit_team": "Portugal", "local_score": 3, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Brasil", "visit_team": "Portugal", "local_score": 3, "visit_score": 1, "points_earned": 3}]}, {"id": "55", "local_team": "Marruecos", "visit_team": "España", "local_score": 0, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Belgica", "visit_team": "España", "local_score": 1, "visit_score": 2, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Belgica", "visit_team": "España", "local_score": 2, "visit_score": 1, "points_earned": 1}]}, {"id": "56", "local_team": "Portugal", "visit_team": "Suiza", "local_score": 6, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Uruguay", "visit_team": "Suiza", "local_score": 1, "visit_score": 0, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Uruguay", "visit_team": "Serbia", "local_score": 2, "visit_score": 0, "points_earned": 0}]}]}, {"nid": "top_8", "order": 3, "started": true, "finished": true, "games": [{"id": "57", "local_team": "Holanda", "visit_team": "Argentina", "local_score": 2, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Holanda", "visit_team": "Argentina", "local_score": 0, "visit_score": 1, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Holanda", "visit_team": "Argentina", "local_score": 1, "visit_score": 2, "points_earned": 3}]}, {"id": "58", "local_team": "Croacia", "visit_team": "Brasil", "local_score": 1, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Alemania", "visit_team": "Brasil", "local_score": 0, "visit_score": 1, "points_earned": 2}, {"player_name": "José Antonio Vial", "local_team": "Alemania", "visit_team": "Brasil", "local_score": 1, "visit_score": 2, "points_earned": 2}]}, {"id": "59", "local_team": "Inglaterra", "visit_team": "Francia", "local_score": 1, "visit_score": 2, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Inglaterra", "visit_team": "Dinamarca", "local_score": 1, "visit_score": 3, "points_earned": 3}, {"player_name": "José Antonio Vial", "local_team": "Ecuador", "visit_team": "Dinamarca", "local_score": 0, "visit_score": 2, "points_earned": 0}]}, {"id": "60", "local_team": "Marruecos", "visit_team": "Portugal", "local_score": 1, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "España", "visit_team": "Uruguay", "local_score": 0, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Belgica", "visit_team": "Uruguay", "local_score": 0, "visit_score": 1, "points_earned": 0}]}]}, {"nid": "top_4", "order": 4, "started": true, "finished": true, "games": [{"id": "61", "local_team": "Argentina", "visit_team": "Croacia", "local_score": 3, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Argentina", "visit_team": "Brasil", "local_score": 0, "visit_score": 2, "points_earned": 1}, {"player_name": "José Antonio Vial", "local_team": "Argentina", "visit_team": "Brasil", "local_score": 1, "visit_score": 3, "points_earned": 1}]}, {"id": "62", "local_team": "Francia", "visit_team": "Marruecos", "local_score": 2, "visit_score": 0, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Dinamarca", "visit_team": "Uruguay", "local_score": 1, "visit_score": 2, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Dinamarca", "visit_team": "Uruguay", "local_score": 0, "visit_score": 1, "points_earned": 0}]}]}, {"nid": "third_place", "order": 5, "started": true, "finished": true, "games": [{"id": "63", "local_team": "Croacia", "visit_team": "Marruecos", "local_score": 2, "visit_score": 1, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Argentina", "visit_team": "Dinamarca", "local_score": 1, "visit_score": 0, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Argentina", "visit_team": "Dinamarca", "local_score": 2, "visit_score": 1, "points_earned": 0}]}]}, {"nid": "finals", "order": 6, "started": true, "finished": true, "games": [{"id": "64", "local_team": "Argentina", "visit_team": "Francia", "local_score": 3, "visit_score": 3, "finished": true, "predictions": [{"player_name": "Joaquín Moreno", "local_team": "Brasil", "visit_team": "Uruguay", "local_score": 1, "visit_score": 1, "points_earned": 0}, {"player_name": "José Antonio Vial", "local_team": "Brasil", "visit_team": "Uruguay", "local_score": 1, "visit_score": 2, "points_earned": 0}]}]}], "players": [{"name": "Joaquín Moreno", "email": "jfmorenosm@gmail.com", "total_points": 79, "champion_pick": "Brasil", "champion_points": 0, "stages": [{"nid": "groups", "order": 1, "stage_points": 0, "games": [{"game_id": "1", "real_local": "Senegal", "real_visit": "Holanda", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Senegal", "pred_visit": "Holanda", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 2}, {"game_id": "2", "real_local": "Qatar", "real_visit": "Ecuador", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Qatar", "pred_visit": "Ecuador", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "3", "real_local": "Inglaterra", "real_visit": "Iran", "real_local_score": 6, "real_visit_score": 2, "pred_local": "Inglaterra", "pred_visit": "Iran", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "4", "real_local": "USA", "real_visit": "Gales", "real_local_score": 1, "real_visit_score": 1, "pred_local": "USA", "pred_visit": "Gales", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "5", "real_local": "Mexico", "real_visit": "Polonia", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Mexico", "pred_visit": "Polonia", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "6", "real_local": "Argentina", "real_visit": "Arabia Saudita", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Argentina", "pred_visit": "Arabia Saudita", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "7", "real_local": "Dinamarca", "real_visit": "Tunez", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Dinamarca", "pred_visit": "Tunez", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "8", "real_local": "Francia", "real_visit": "Australia", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Francia", "pred_visit": "Australia", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 1}, {"game_id": "9", "real_local": "Alemania", "real_visit": "Japon", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Alemania", "pred_visit": "Japon", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "10", "real_local": "España", "real_visit": "Costa Rica", "real_local_score": 7, "real_visit_score": 0, "pred_local": "España", "pred_visit": "Costa Rica", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "11", "real_local": "Marruecos", "real_visit": "Croacia", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Marruecos", "pred_visit": "Croacia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "12", "real_local": "Belgica", "real_visit": "Canada", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Belgica", "pred_visit": "Canada", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "13", "real_local": "Suiza", "real_visit": "Camerun", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Suiza", "pred_visit": "Camerun", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 3}, {"game_id": "14", "real_local": "Brasil", "real_visit": "Serbia", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Brasil", "pred_visit": "Serbia", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 3}, {"game_id": "15", "real_local": "Uruguay", "real_visit": "Corea", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Uruguay", "pred_visit": "Corea", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "16", "real_local": "Portugal", "real_visit": "Gana", "real_local_score": 3, "real_visit_score": 2, "pred_local": "Portugal", "pred_visit": "Gana", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 1}, {"game_id": "17", "real_local": "Qatar", "real_visit": "Senegal", "real_local_score": 1, "real_visit_score": 3, "pred_local": "Qatar", "pred_visit": "Senegal", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "18", "real_local": "Holanda", "real_visit": "Ecuador", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Holanda", "pred_visit": "Ecuador", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "19", "real_local": "Gales", "real_visit": "Iran", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Gales", "pred_visit": "Iran", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "20", "real_local": "Inglaterra", "real_visit": "USA", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Inglaterra", "pred_visit": "USA", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "21", "real_local": "Polonia", "real_visit": "Arabia Saudita", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Polonia", "pred_visit": "Arabia Saudita", "pred_local_score": 0, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "22", "real_local": "Argentina", "real_visit": "Mexico", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Argentina", "pred_visit": "Mexico", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "23", "real_local": "Tunez", "real_visit": "Australia", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Tunez", "pred_visit": "Australia", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "24", "real_local": "Francia", "real_visit": "Dinamarca", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Francia", "pred_visit": "Dinamarca", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "25", "real_local": "Japon", "real_visit": "Costa Rica", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Japon", "pred_visit": "Costa Rica", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "26", "real_local": "España", "real_visit": "Alemania", "real_local_score": 1, "real_visit_score": 1, "pred_local": "España", "pred_visit": "Alemania", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "27", "real_local": "Belgica", "real_visit": "Marruecos", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Belgica", "pred_visit": "Marruecos", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "28", "real_local": "Croacia", "real_visit": "Canada", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Croacia", "pred_visit": "Canada", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 1}, {"game_id": "29", "real_local": "Camerun", "real_visit": "Serbia", "real_local_score": 3, "real_visit_score": 3, "pred_local": "Camerun", "pred_visit": "Serbia", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "30", "real_local": "Brasil", "real_visit": "Suiza", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Brasil", "pred_visit": "Suiza", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 3}, {"game_id": "31", "real_local": "Corea", "real_visit": "Gana", "real_local_score": 2, "real_visit_score": 3, "pred_local": "Corea", "pred_visit": "Gana", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "32", "real_local": "Portugal", "real_visit": "Uruguay", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Portugal", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "33", "real_local": "Ecuador", "real_visit": "Senegal", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Ecuador", "pred_visit": "Senegal", "pred_local_score": 0, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "34", "real_local": "Holanda", "real_visit": "Qatar", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Holanda", "pred_visit": "Qatar", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "35", "real_local": "Gales", "real_visit": "Inglaterra", "real_local_score": 0, "real_visit_score": 3, "pred_local": "Gales", "pred_visit": "Inglaterra", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "36", "real_local": "Iran", "real_visit": "USA", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Iran", "pred_visit": "USA", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 2}, {"game_id": "37", "real_local": "Polonia", "real_visit": "Argentina", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Polonia", "pred_visit": "Argentina", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "38", "real_local": "Arabia Saudita", "real_visit": "Mexico", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Arabia Saudita", "pred_visit": "Mexico", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "39", "real_local": "Tunez", "real_visit": "Francia", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Tunez", "pred_visit": "Francia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "40", "real_local": "Australia", "real_visit": "Dinamarca", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Australia", "pred_visit": "Dinamarca", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "41", "real_local": "Japon", "real_visit": "España", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Japon", "pred_visit": "España", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "42", "real_local": "Costa Rica", "real_visit": "Alemania", "real_local_score": 2, "real_visit_score": 4, "pred_local": "Costa Rica", "pred_visit": "Alemania", "pred_local_score": 0, "pred_visit_score": 3, "points_earned": 1}, {"game_id": "43", "real_local": "Croacia", "real_visit": "Belgica", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Croacia", "pred_visit": "Belgica", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "44", "real_local": "Canada", "real_visit": "Marruecos", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Canada", "pred_visit": "Marruecos", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 2}, {"game_id": "45", "real_local": "Serbia", "real_visit": "Suiza", "real_local_score": 2, "real_visit_score": 3, "pred_local": "Serbia", "pred_visit": "Suiza", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "46", "real_local": "Camerun", "real_visit": "Brasil", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Camerun", "pred_visit": "Brasil", "pred_local_score": 0, "pred_visit_score": 3, "points_earned": 0}, {"game_id": "47", "real_local": "Gana", "real_visit": "Uruguay", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Gana", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "48", "real_local": "Corea", "real_visit": "Portugal", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Corea", "pred_visit": "Portugal", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}]}, {"nid": "top_16", "order": 2, "stage_points": 10, "games": [{"game_id": "49", "real_local": "Holanda", "real_visit": "USA", "real_local_score": 3, "real_visit_score": 1, "pred_local": "Holanda", "pred_visit": "Gales", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "50", "real_local": "Argentina", "real_visit": "Australia", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Argentina", "pred_visit": "Francia", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 4}, {"game_id": "51", "real_local": "Inglaterra", "real_visit": "Senegal", "real_local_score": 3, "real_visit_score": 0, "pred_local": "Inglaterra", "pred_visit": "Ecuador", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "52", "real_local": "Francia", "real_visit": "Polonia", "real_local_score": 3, "real_visit_score": 1, "pred_local": "Dinamarca", "pred_visit": "Polonia", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "53", "real_local": "Japon", "real_visit": "Croacia", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Alemania", "pred_visit": "Croacia", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "54", "real_local": "Brasil", "real_visit": "Corea", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Brasil", "pred_visit": "Portugal", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "55", "real_local": "Marruecos", "real_visit": "España", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Belgica", "pred_visit": "España", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 1}, {"game_id": "56", "real_local": "Portugal", "real_visit": "Suiza", "real_local_score": 6, "real_visit_score": 1, "pred_local": "Uruguay", "pred_visit": "Suiza", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 2}]}, {"nid": "top_8", "order": 3, "stage_points": 8, "games": [{"game_id": "57", "real_local": "Holanda", "real_visit": "Argentina", "real_local_score": 2, "real_visit_score": 2, "pred_local": "Holanda", "pred_visit": "Argentina", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "58", "real_local": "Croacia", "real_visit": "Brasil", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Alemania", "pred_visit": "Brasil", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "59", "real_local": "Inglaterra", "real_visit": "Francia", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Inglaterra", "pred_visit": "Dinamarca", "pred_local_score": 1, "pred_visit_score": 3, "points_earned": 3}, {"game_id": "60", "real_local": "Marruecos", "real_visit": "Portugal", "real_local_score": 1, "real_visit_score": 0, "pred_local": "España", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 0}]}, {"nid": "top_4", "order": 4, "stage_points": 3, "games": [{"game_id": "61", "real_local": "Argentina", "real_visit": "Croacia", "real_local_score": 3, "real_visit_score": 0, "pred_local": "Argentina", "pred_visit": "Brasil", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 1}, {"game_id": "62", "real_local": "Francia", "real_visit": "Marruecos", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Dinamarca", "pred_visit": "Uruguay", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}]}, {"nid": "third_place", "order": 5, "stage_points": 0, "games": [{"game_id": "63", "real_local": "Croacia", "real_visit": "Marruecos", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Argentina", "pred_visit": "Dinamarca", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}]}, {"nid": "finals", "order": 6, "stage_points": 0, "games": [{"game_id": "64", "real_local": "Argentina", "real_visit": "Francia", "real_local_score": 3, "real_visit_score": 3, "pred_local": "Brasil", "pred_visit": "Uruguay", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}]}]}, {"name": "José Antonio Vial", "email": "javial2@uc.cl", "total_points": 73, "champion_pick": "Uruguay", "champion_points": 0, "stages": [{"nid": "groups", "order": 1, "stage_points": 0, "games": [{"game_id": "1", "real_local": "Senegal", "real_visit": "Holanda", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Senegal", "pred_visit": "Holanda", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 3}, {"game_id": "2", "real_local": "Qatar", "real_visit": "Ecuador", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Qatar", "pred_visit": "Ecuador", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "3", "real_local": "Inglaterra", "real_visit": "Iran", "real_local_score": 6, "real_visit_score": 2, "pred_local": "Inglaterra", "pred_visit": "Iran", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 1}, {"game_id": "4", "real_local": "USA", "real_visit": "Gales", "real_local_score": 1, "real_visit_score": 1, "pred_local": "USA", "pred_visit": "Gales", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "5", "real_local": "Mexico", "real_visit": "Polonia", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Mexico", "pred_visit": "Polonia", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "6", "real_local": "Argentina", "real_visit": "Arabia Saudita", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Argentina", "pred_visit": "Arabia Saudita", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "7", "real_local": "Dinamarca", "real_visit": "Tunez", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Dinamarca", "pred_visit": "Tunez", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "8", "real_local": "Francia", "real_visit": "Australia", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Francia", "pred_visit": "Australia", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "9", "real_local": "Alemania", "real_visit": "Japon", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Alemania", "pred_visit": "Japon", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "10", "real_local": "España", "real_visit": "Costa Rica", "real_local_score": 7, "real_visit_score": 0, "pred_local": "España", "pred_visit": "Costa Rica", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "11", "real_local": "Marruecos", "real_visit": "Croacia", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Marruecos", "pred_visit": "Croacia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "12", "real_local": "Belgica", "real_visit": "Canada", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Belgica", "pred_visit": "Canada", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "13", "real_local": "Suiza", "real_visit": "Camerun", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Suiza", "pred_visit": "Camerun", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 3}, {"game_id": "14", "real_local": "Brasil", "real_visit": "Serbia", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Brasil", "pred_visit": "Serbia", "pred_local_score": 3, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "15", "real_local": "Uruguay", "real_visit": "Corea", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Uruguay", "pred_visit": "Corea", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "16", "real_local": "Portugal", "real_visit": "Gana", "real_local_score": 3, "real_visit_score": 2, "pred_local": "Portugal", "pred_visit": "Gana", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "17", "real_local": "Qatar", "real_visit": "Senegal", "real_local_score": 1, "real_visit_score": 3, "pred_local": "Qatar", "pred_visit": "Senegal", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "18", "real_local": "Holanda", "real_visit": "Ecuador", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Holanda", "pred_visit": "Ecuador", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "19", "real_local": "Gales", "real_visit": "Iran", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Gales", "pred_visit": "Iran", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "20", "real_local": "Inglaterra", "real_visit": "USA", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Inglaterra", "pred_visit": "USA", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "21", "real_local": "Polonia", "real_visit": "Arabia Saudita", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Polonia", "pred_visit": "Arabia Saudita", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "22", "real_local": "Argentina", "real_visit": "Mexico", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Argentina", "pred_visit": "Mexico", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "23", "real_local": "Tunez", "real_visit": "Australia", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Tunez", "pred_visit": "Australia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 1}, {"game_id": "24", "real_local": "Francia", "real_visit": "Dinamarca", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Francia", "pred_visit": "Dinamarca", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "25", "real_local": "Japon", "real_visit": "Costa Rica", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Japon", "pred_visit": "Costa Rica", "pred_local_score": 1, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "26", "real_local": "España", "real_visit": "Alemania", "real_local_score": 1, "real_visit_score": 1, "pred_local": "España", "pred_visit": "Alemania", "pred_local_score": 0, "pred_visit_score": 3, "points_earned": 0}, {"game_id": "27", "real_local": "Belgica", "real_visit": "Marruecos", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Belgica", "pred_visit": "Marruecos", "pred_local_score": 3, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "28", "real_local": "Croacia", "real_visit": "Canada", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Croacia", "pred_visit": "Canada", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 1}, {"game_id": "29", "real_local": "Camerun", "real_visit": "Serbia", "real_local_score": 3, "real_visit_score": 3, "pred_local": "Camerun", "pred_visit": "Serbia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "30", "real_local": "Brasil", "real_visit": "Suiza", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Brasil", "pred_visit": "Suiza", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 2}, {"game_id": "31", "real_local": "Corea", "real_visit": "Gana", "real_local_score": 2, "real_visit_score": 3, "pred_local": "Corea", "pred_visit": "Gana", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "32", "real_local": "Portugal", "real_visit": "Uruguay", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Portugal", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "33", "real_local": "Ecuador", "real_visit": "Senegal", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Ecuador", "pred_visit": "Senegal", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "34", "real_local": "Holanda", "real_visit": "Qatar", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Holanda", "pred_visit": "Qatar", "pred_local_score": 3, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "35", "real_local": "Gales", "real_visit": "Inglaterra", "real_local_score": 0, "real_visit_score": 3, "pred_local": "Gales", "pred_visit": "Inglaterra", "pred_local_score": 0, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "36", "real_local": "Iran", "real_visit": "USA", "real_local_score": 0, "real_visit_score": 1, "pred_local": "Iran", "pred_visit": "USA", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "37", "real_local": "Polonia", "real_visit": "Argentina", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Polonia", "pred_visit": "Argentina", "pred_local_score": 0, "pred_visit_score": 3, "points_earned": 2}, {"game_id": "38", "real_local": "Arabia Saudita", "real_visit": "Mexico", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Arabia Saudita", "pred_visit": "Mexico", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "39", "real_local": "Tunez", "real_visit": "Francia", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Tunez", "pred_visit": "Francia", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "40", "real_local": "Australia", "real_visit": "Dinamarca", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Australia", "pred_visit": "Dinamarca", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "41", "real_local": "Japon", "real_visit": "España", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Japon", "pred_visit": "España", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "42", "real_local": "Costa Rica", "real_visit": "Alemania", "real_local_score": 2, "real_visit_score": 4, "pred_local": "Costa Rica", "pred_visit": "Alemania", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 1}, {"game_id": "43", "real_local": "Croacia", "real_visit": "Belgica", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Croacia", "pred_visit": "Belgica", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "44", "real_local": "Canada", "real_visit": "Marruecos", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Canada", "pred_visit": "Marruecos", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "45", "real_local": "Serbia", "real_visit": "Suiza", "real_local_score": 2, "real_visit_score": 3, "pred_local": "Serbia", "pred_visit": "Suiza", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "46", "real_local": "Camerun", "real_visit": "Brasil", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Camerun", "pred_visit": "Brasil", "pred_local_score": 0, "pred_visit_score": 3, "points_earned": 0}, {"game_id": "47", "real_local": "Gana", "real_visit": "Uruguay", "real_local_score": 0, "real_visit_score": 2, "pred_local": "Gana", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 2}, {"game_id": "48", "real_local": "Corea", "real_visit": "Portugal", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Corea", "pred_visit": "Portugal", "pred_local_score": 1, "pred_visit_score": 3, "points_earned": 0}]}, {"nid": "top_16", "order": 2, "stage_points": 9, "games": [{"game_id": "49", "real_local": "Holanda", "real_visit": "USA", "real_local_score": 3, "real_visit_score": 1, "pred_local": "Holanda", "pred_visit": "Inglaterra", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "50", "real_local": "Argentina", "real_visit": "Australia", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Argentina", "pred_visit": "Australia", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 3}, {"game_id": "51", "real_local": "Inglaterra", "real_visit": "Senegal", "real_local_score": 3, "real_visit_score": 0, "pred_local": "USA", "pred_visit": "Ecuador", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 0}, {"game_id": "52", "real_local": "Francia", "real_visit": "Polonia", "real_local_score": 3, "real_visit_score": 1, "pred_local": "Dinamarca", "pred_visit": "Mexico", "pred_local_score": 3, "pred_visit_score": 0, "points_earned": 0}, {"game_id": "53", "real_local": "Japon", "real_visit": "Croacia", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Alemania", "pred_visit": "Croacia", "pred_local_score": 1, "pred_visit_score": 1, "points_earned": 4}, {"game_id": "54", "real_local": "Brasil", "real_visit": "Corea", "real_local_score": 4, "real_visit_score": 1, "pred_local": "Brasil", "pred_visit": "Portugal", "pred_local_score": 3, "pred_visit_score": 1, "points_earned": 3}, {"game_id": "55", "real_local": "Marruecos", "real_visit": "España", "real_local_score": 0, "real_visit_score": 0, "pred_local": "Belgica", "pred_visit": "España", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 1}, {"game_id": "56", "real_local": "Portugal", "real_visit": "Suiza", "real_local_score": 6, "real_visit_score": 1, "pred_local": "Uruguay", "pred_visit": "Serbia", "pred_local_score": 2, "pred_visit_score": 0, "points_earned": 0}]}, {"nid": "top_8", "order": 3, "stage_points": 6, "games": [{"game_id": "57", "real_local": "Holanda", "real_visit": "Argentina", "real_local_score": 2, "real_visit_score": 2, "pred_local": "Holanda", "pred_visit": "Argentina", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 3}, {"game_id": "58", "real_local": "Croacia", "real_visit": "Brasil", "real_local_score": 1, "real_visit_score": 1, "pred_local": "Alemania", "pred_visit": "Brasil", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 2}, {"game_id": "59", "real_local": "Inglaterra", "real_visit": "Francia", "real_local_score": 1, "real_visit_score": 2, "pred_local": "Ecuador", "pred_visit": "Dinamarca", "pred_local_score": 0, "pred_visit_score": 2, "points_earned": 0}, {"game_id": "60", "real_local": "Marruecos", "real_visit": "Portugal", "real_local_score": 1, "real_visit_score": 0, "pred_local": "Belgica", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}]}, {"nid": "top_4", "order": 4, "stage_points": 3, "games": [{"game_id": "61", "real_local": "Argentina", "real_visit": "Croacia", "real_local_score": 3, "real_visit_score": 0, "pred_local": "Argentina", "pred_visit": "Brasil", "pred_local_score": 1, "pred_visit_score": 3, "points_earned": 1}, {"game_id": "62", "real_local": "Francia", "real_visit": "Marruecos", "real_local_score": 2, "real_visit_score": 0, "pred_local": "Dinamarca", "pred_visit": "Uruguay", "pred_local_score": 0, "pred_visit_score": 1, "points_earned": 0}]}, {"nid": "third_place", "order": 5, "stage_points": 0, "games": [{"game_id": "63", "real_local": "Croacia", "real_visit": "Marruecos", "real_local_score": 2, "real_visit_score": 1, "pred_local": "Argentina", "pred_visit": "Dinamarca", "pred_local_score": 2, "pred_visit_score": 1, "points_earned": 0}]}, {"nid": "finals", "order": 6, "stage_points": 0, "games": [{"game_id": "64", "real_local": "Argentina", "real_visit": "Francia", "real_local_score": 3, "real_visit_score": 3, "pred_local": "Brasil", "pred_visit": "Uruguay", "pred_local_score": 1, "pred_visit_score": 2, "points_earned": 0}]}]}]};</script>
+</body>
+</html>

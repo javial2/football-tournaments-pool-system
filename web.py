@@ -1,0 +1,170 @@
+from src.utils.create_and_load_tournament import load_tournament
+
+import json
+import os
+import http.server
+import socketserver
+from argparse import ArgumentParser
+
+
+def build_ranking(T):
+    p_list = [[p.name, p.points] for p in T.players.values()]
+    sorted_list = sorted(p_list, key=lambda x: x[1], reverse=True)
+    result = []
+    last_points = -1
+    last_rank = 1
+    for i, row in enumerate(sorted_list, start=1):
+        if row[1] == last_points:
+            rank = last_rank
+        else:
+            rank = i
+            last_rank = i
+        result.append({"rank": rank, "name": row[0], "points": row[1]})
+        last_points = row[1]
+    return result
+
+
+def build_stages(T):
+    stages_out = []
+    sorted_stages = sorted(T.stages.values(), key=lambda s: s.order)
+    for stage in sorted_stages:
+        stage_dict = {
+            "nid":      stage.nid,
+            "order":    stage.order,
+            "started":  stage.stage_started(),
+            "finished": stage.stage_finished(),
+            "games":    []
+        }
+        sorted_games = sorted(stage.games.values(), key=lambda g: int(g.id))
+        for game in sorted_games:
+            predictions = []
+            for player in T.players.values():
+                pred_data = player.data["games"][game.id]["data"]
+                predictions.append({
+                    "player_name":   player.name,
+                    "local_team":    pred_data["local_team"],
+                    "visit_team":    pred_data["visit_team"],
+                    "local_score":   pred_data["local_score"],
+                    "visit_score":   pred_data["visit_score"],
+                    "points_earned": game.game_points(player)
+                })
+            stage_dict["games"].append({
+                "id":          game.id,
+                "local_team":  game.local_team,
+                "visit_team":  game.visit_team,
+                "local_score": game.local_score,
+                "visit_score": game.visit_score,
+                "finished":    game.is_game_finished(),
+                "predictions": predictions
+            })
+        stages_out.append(stage_dict)
+    return stages_out
+
+
+def build_players(T):
+    players_out = []
+    sorted_stages = sorted(T.stages.values(), key=lambda s: s.order)
+    for player in T.players.values():
+        player_stages = []
+        for stage in sorted_stages:
+            game_breakdown = []
+            sorted_games = sorted(stage.games.values(), key=lambda g: int(g.id))
+            for game in sorted_games:
+                pred_data = player.data["games"][game.id]["data"]
+                game_breakdown.append({
+                    "game_id":           game.id,
+                    "real_local":        game.local_team,
+                    "real_visit":        game.visit_team,
+                    "real_local_score":  game.local_score,
+                    "real_visit_score":  game.visit_score,
+                    "pred_local":        pred_data["local_team"],
+                    "pred_visit":        pred_data["visit_team"],
+                    "pred_local_score":  pred_data["local_score"],
+                    "pred_visit_score":  pred_data["visit_score"],
+                    "points_earned":     game.game_points(player)
+                })
+            player_stages.append({
+                "nid":          stage.nid,
+                "order":        stage.order,
+                "stage_points": stage.stage_points(player),
+                "games":        game_breakdown
+            })
+        players_out.append({
+            "name":           player.name,
+            "email":          player.email,
+            "total_points":   player.points,
+            "champion_pick":  player.data["champion"],
+            "champion_points": T.tournament_points(player),
+            "stages":         player_stages
+        })
+    return players_out
+
+
+def build_export(T):
+    return {
+        "tournament_name": T.name,
+        "ranking":         build_ranking(T),
+        "stages":          build_stages(T),
+        "players":         build_players(T)
+    }
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description="Serve web visualization for a tournament instance.")
+    parser.add_argument("--instance", "-i", type=str, required=True,
+                        help="Instance name in ./instances/")
+    parser.add_argument("--port", "-p", type=int, default=8000,
+                        help="Port to serve on (default: 8000)")
+    parser.add_argument("--export", action="store_true",
+                        help="Generate docs/index.html for GitHub Pages (no server started)")
+    args = parser.parse_args()
+
+    print(f"Loading tournament: {args.instance}")
+    T = load_tournament(args.instance)
+    T.initialize()
+    if not T.valid:
+        print("Tournament data is invalid. Fix the source files and retry.")
+        raise SystemExit(1)
+    T.update_players_points()
+    print(f"Loaded {len(T.players)} players, {T.number_of_games()} games.")
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    WEB_DIR  = os.path.join(BASE_DIR, "web")
+    os.makedirs(WEB_DIR, exist_ok=True)
+
+    data = build_export(T)
+
+    if args.export:
+        # Embed data into index.html and write to docs/ for GitHub Pages deployment
+        template_path = os.path.join(WEB_DIR, "index.html")
+        with open(template_path, encoding="utf-8") as f:
+            template = f.read()
+
+        data_script = (
+            "<script>window.__DATA__ = "
+            + json.dumps(data, ensure_ascii=False)
+            + ";</script>\n"
+        )
+        standalone = template.replace("</body>", data_script + "</body>")
+
+        docs_dir = os.path.join(BASE_DIR, "docs")
+        os.makedirs(docs_dir, exist_ok=True)
+        out_path = os.path.join(docs_dir, "index.html")
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(standalone)
+        print(f"Exported to {out_path}")
+        print("Commit docs/index.html and push — GitHub Pages will update automatically.")
+    else:
+        # Write data.json and start local server
+        output_path = os.path.join(WEB_DIR, "data.json")
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Data written to {output_path}")
+
+        Handler = lambda *args, **kwargs: http.server.SimpleHTTPRequestHandler(
+            *args, directory=WEB_DIR, **kwargs
+        )
+        print(f"Serving at http://localhost:{args.port}/")
+        print("Press Ctrl+C to stop.")
+        with socketserver.TCPServer(("", args.port), Handler) as httpd:
+            httpd.serve_forever()
