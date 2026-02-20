@@ -145,7 +145,7 @@ if __name__ == "__main__":
             + json.dumps(data, ensure_ascii=False)
             + ";</script>\n"
         )
-        standalone = template.replace("</body>", data_script + "</body>")
+        standalone = template.replace("<body>", "<body>\n" + data_script)
 
         docs_dir = os.path.join(BASE_DIR, "docs")
         os.makedirs(docs_dir, exist_ok=True)
