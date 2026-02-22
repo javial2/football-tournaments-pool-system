@@ -292,6 +292,35 @@
       margin-left: 0.5rem;
     }
 
+    /* ── Points tooltip ── */
+    [data-bp] { cursor: help; }
+    #pts-tooltip {
+      position: fixed;
+      display: none;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      padding: 0.5rem 0.75rem;
+      border-radius: 7px;
+      font-size: 0.8rem;
+      z-index: 300;
+      pointer-events: none;
+      line-height: 1.75;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    }
+    #pts-tooltip .tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+    #pts-tooltip .tip-pts { font-weight: 700; color: var(--accent); }
+    #pts-tooltip .tip-sep {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      margin: 0.25rem 0;
+    }
+    #pts-tooltip .tip-total { font-weight: 700; color: #fff; }
+
     .loading {
       text-align: center;
       padding: 3rem;
@@ -425,9 +454,11 @@
         for (const name of playerNames) {
           const pred = game.predictions.find(p => p.player_name === name);
           if (!pred) { html += '<td>-</td>'; continue; }
-          const score = fmtScore(pred.local_score, pred.visit_score) || '-';
-          const cls   = pred.points_earned > 0 ? ' class="pts-positive"' : '';
-          html += `<td${cls}>${score}</td>`;
+          const score  = fmtScore(pred.local_score, pred.visit_score) || '-';
+          const cls    = pred.points_earned > 0 ? ' class="pts-positive"' : '';
+          const bpAttr = pred.points_breakdown?.length
+            ? ` data-bp='${JSON.stringify(pred.points_breakdown)}'` : '';
+          html += `<td${cls}${bpAttr}>${score}</td>`;
         }
         html += '</tr></tbody></table></div>';
       }
@@ -524,12 +555,14 @@
           ? `${teamFlag(g.pred_local)}${esc(g.pred_local)} ${g.pred_local_score ?? '?'}-${g.pred_visit_score ?? '?'} ${teamFlag(g.pred_visit)}${esc(g.pred_visit)}`
           : '—';
         const ptsCls = g.points_earned > 0 ? 'pts-positive' : '';
+        const bpAttr = g.points_breakdown?.length
+          ? ` data-bp='${JSON.stringify(g.points_breakdown)}'` : '';
 
         html += `<tr>
           <td>${g.game_id}</td>
           <td>${realStr}</td>
           <td>${predStr}</td>
-          <td class="pts ${ptsCls}">${g.points_earned}</td>
+          <td class="pts ${ptsCls}"${bpAttr}>${g.points_earned}</td>
         </tr>`;
       }
       html += '</tbody></table>';
@@ -624,6 +657,48 @@
       .replace(/"/g, '&quot;');
   }
 
+  // ── Points breakdown tooltip ────────────────────────────────────────
+  function setupTooltip() {
+    const tip = document.createElement('div');
+    tip.id = 'pts-tooltip';
+    document.body.appendChild(tip);
+
+    document.body.addEventListener('mouseover', e => {
+      const el = e.target.closest('[data-bp]');
+      if (!el) return;
+      const breakdown = JSON.parse(el.dataset.bp);
+      const total = breakdown.reduce((s, b) => s + b.points, 0);
+      const rows = breakdown.map(b =>
+        `<div class="tip-row">
+          <span>${b.label}</span>
+          <span class="tip-pts">${b.points > 0 ? '+' : ''}${b.points} / ${b.max}</span>
+        </div>`
+      ).join('');
+      tip.innerHTML = rows +
+        `<hr class="tip-sep">
+         <div class="tip-row">
+           <span>Total</span>
+           <span class="tip-total tip-pts">+${total} pts</span>
+         </div>`;
+      tip.style.display = 'block';
+    });
+
+    document.body.addEventListener('mousemove', e => {
+      if (tip.style.display === 'none') return;
+      let left = e.clientX + 14;
+      let top  = e.clientY + 10;
+      if (left + tip.offsetWidth  > window.innerWidth  - 8) left = e.clientX - tip.offsetWidth  - 14;
+      if (top  + tip.offsetHeight > window.innerHeight - 8) top  = e.clientY - tip.offsetHeight - 10;
+      tip.style.left = left + 'px';
+      tip.style.top  = top  + 'px';
+    });
+
+    document.body.addEventListener('mouseout', e => {
+      const el = e.target.closest('[data-bp]');
+      if (el && !el.contains(e.relatedTarget)) tip.style.display = 'none';
+    });
+  }
+
   // ── Bootstrap ───────────────────────────────────────────────────────
   async function fetchData() {
     if (window.__DATA__) { initApp(window.__DATA__); return; }
@@ -652,6 +727,7 @@
 
     setupTabs();
     setupEvents();
+    setupTooltip();
   }
 
   fetchData();

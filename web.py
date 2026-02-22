@@ -1,10 +1,43 @@
 from src.utils.create_and_load_tournament import load_tournament
+import src.points_calculator.game_points as gpc
 
 import json
 import os
 import http.server
 import socketserver
 from argparse import ArgumentParser
+
+
+_BP_LABELS = {
+    'points_per_team':   'Equipos',
+    'points_per_result': 'Resultado',
+    'points_per_score':  'Marcador',
+}
+_BP_MAX_MULT = {
+    'points_per_team':   2,   # value per team × 2 teams
+    'points_per_result': 1,
+    'points_per_score':  2,   # value per score × 2 scores
+}
+
+def game_points_breakdown(game, player):
+    """Return per-method point breakdown for a finished game."""
+    if not game.is_game_finished():
+        return []
+    real_game      = game.game_data
+    predicted_game = player.data['games'][game.id]['data']
+    breakdown = []
+    for ps, cfg in game.points_system.items():
+        if ps not in gpc.allowed_point_methods:
+            continue
+        pts = gpc.allowed_point_methods[ps](
+            real_game, predicted_game, cfg['value'], cfg['restrictions']
+        )
+        breakdown.append({
+            'label':  _BP_LABELS.get(ps, ps),
+            'points': pts,
+            'max':    cfg['value'] * _BP_MAX_MULT.get(ps, 1),
+        })
+    return breakdown
 
 
 def build_ranking(T):
@@ -41,12 +74,13 @@ def build_stages(T):
             for player in T.players.values():
                 pred_data = player.data["games"][game.id]["data"]
                 predictions.append({
-                    "player_name":   player.name,
-                    "local_team":    pred_data["local_team"],
-                    "visit_team":    pred_data["visit_team"],
-                    "local_score":   pred_data["local_score"],
-                    "visit_score":   pred_data["visit_score"],
-                    "points_earned": game.game_points(player)
+                    "player_name":      player.name,
+                    "local_team":       pred_data["local_team"],
+                    "visit_team":       pred_data["visit_team"],
+                    "local_score":      pred_data["local_score"],
+                    "visit_score":      pred_data["visit_score"],
+                    "points_earned":    game.game_points(player),
+                    "points_breakdown": game_points_breakdown(game, player),
                 })
             stage_dict["games"].append({
                 "id":          game.id,
@@ -81,7 +115,8 @@ def build_players(T):
                     "pred_visit":        pred_data["visit_team"],
                     "pred_local_score":  pred_data["local_score"],
                     "pred_visit_score":  pred_data["visit_score"],
-                    "points_earned":     game.game_points(player)
+                    "points_earned":     game.game_points(player),
+                    "points_breakdown":  game_points_breakdown(game, player),
                 })
             player_stages.append({
                 "nid":          stage.nid,
