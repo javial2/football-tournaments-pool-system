@@ -321,6 +321,43 @@
     }
     #pts-tooltip .tip-total { font-weight: 700; color: #fff; }
 
+    /* ── Partidos view v2 ── */
+    .games-list { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .game-card-v2 { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+    .game-hdr { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: #fff; padding: 0.75rem 1rem; }
+    .game-hdr-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.5rem; }
+    .game-hdr-badge { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 20px; }
+    .game-hdr-badge.fin  { background: #c8f0d0; color: #1a6b30; opacity: 1; }
+    .game-hdr-badge.live { background: #ffd700; color: #333;    opacity: 1; }
+    .game-hdr-badge.pend { background: rgba(255,255,255,0.2);               }
+    .game-matchup { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .game-team { flex: 1; display: flex; align-items: center; gap: 0.4rem; }
+    .game-team.local { justify-content: flex-end; }
+    .game-team.visit { justify-content: flex-start; }
+    .game-team-name { font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
+    .game-score-box { font-size: 2.1rem; font-weight: 800; letter-spacing: 0.06em; padding: 0 0.75rem; white-space: nowrap; flex-shrink: 0; }
+    .game-score-box.tbd { font-size: 1.1rem; font-weight: 600; opacity: 0.65; }
+    .game-stats-body { padding: 0.85rem 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    @media (max-width: 640px) { .game-stats-body { grid-template-columns: 1fr; } }
+    .stat-box { background: var(--bg); border-radius: 8px; padding: 0.65rem 0.75rem; }
+    .stat-box.wide { grid-column: 1 / -1; }
+    .stat-box-lbl { font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.55rem; }
+    .res-bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; }
+    .res-bar-seg { height: 100%; transition: width 0.5s ease; }
+    .res-bar-leg { display: flex; gap: 0.55rem; flex-wrap: wrap; margin-top: 0.45rem; font-size: 0.72rem; }
+    .res-bar-leg-dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; margin-right: 3px; }
+    .res-bar-note { margin-top: 0.45rem; font-size: 0.71rem; color: var(--muted); }
+    .mbar-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.24rem; }
+    .mbar-lbl { font-size: 0.74rem; min-width: 2.8rem; text-align: right; white-space: nowrap; font-weight: 600; color: var(--text); }
+    .mbar-track { flex: 1; background: var(--border); border-radius: 3px; height: 13px; overflow: hidden; }
+    .mbar-fill  { height: 100%; border-radius: 3px; transition: width 0.5s; }
+    .mbar-cnt { font-size: 0.7rem; color: var(--muted); min-width: 1.8rem; }
+    .mbar-row.real .mbar-lbl { color: var(--primary); font-weight: 800; }
+    .mbar-row.real .mbar-track { outline: 2px solid var(--accent); border-radius: 3px; }
+    .qstats { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+    .qstat { background: var(--surface); border-radius: 6px; padding: 0.28rem 0.55rem; font-size: 0.72rem; color: var(--muted); }
+    .qstat strong { color: var(--primary); }
+
     .loading {
       text-align: center;
       padding: 3rem;
@@ -419,54 +456,175 @@
     panel.innerHTML = html;
   }
 
-  // ── View 2: Matches ─────────────────────────────────────────────────
+  // ── View 2: Matches (stats rebuild) ────────────────────────────────
+  const RES_COLORS = { local: '#1d6fa4', tie: '#9ca3af', visit: '#c2630b' };
+
+  function getResultType(ls, vs) {
+    const l = Number(ls), v = Number(vs);
+    return l > v ? 'local' : l < v ? 'visit' : 'tie';
+  }
+
   function renderMatches(stages, ranking) {
     const panel = document.getElementById('tab-matches');
-    const playerNames = ranking.map(r => r.name);
-
     let html = '<h2>Resultados y Predicciones</h2>';
-
     for (const stage of stages) {
-      const label = formatStageName(stage.nid);
-      const badge = stage.finished ? 'Finalizada' : stage.started ? 'En curso' : 'No iniciada';
+      const label    = formatStageName(stage.nid);
+      const badge    = stage.finished ? 'Finalizada' : stage.started ? 'En curso' : 'No iniciada';
       const openAttr = stage.order > 1 ? ' open' : '';
-
       html += `<details${openAttr}>
-        <summary>${label} <span class="badge">${badge}</span></summary>`;
-
+        <summary>${label} <span class="badge">${badge}</span></summary>
+        <div class="games-list">`;
       for (const game of stage.games) {
         if (!game.local_team && !game.visit_team) continue;
-
-        const local  = game.local_team  || '?';
-        const visit  = game.visit_team  || '?';
-        const realStr = fmtScore(game.local_score, game.visit_score)
-          || '<span class="not-played">Por jugar</span>';
-
-        html += `<div class="game-card">
-          <h4>Partido ${game.id}: ${teamFlag(local)}${esc(local)} vs ${teamFlag(visit)}${esc(visit)}</h4>
-          <table class="pred-table"><thead><tr>
-            <th>Resultado Real</th>`;
-
-        for (const name of playerNames) {
-          html += `<th>${esc(name)}</th>`;
-        }
-        html += '</tr></thead><tbody><tr>';
-        html += `<td class="real-score">${realStr}</td>`;
-
-        for (const name of playerNames) {
-          const pred = game.predictions.find(p => p.player_name === name);
-          if (!pred) { html += '<td>-</td>'; continue; }
-          const score  = fmtScore(pred.local_score, pred.visit_score) || '-';
-          const cls    = pred.points_earned > 0 ? ' class="pts-positive"' : '';
-          const bpAttr = pred.points_breakdown?.length
-            ? ` data-bp='${JSON.stringify(pred.points_breakdown)}'` : '';
-          html += `<td${cls}${bpAttr}>${score}</td>`;
-        }
-        html += '</tr></tbody></table></div>';
+        html += buildGameCard(game);
       }
-      html += '</details>';
+      html += '</div></details>';
     }
     panel.innerHTML = html;
+  }
+
+  function buildGameCard(game) {
+    const local = game.local_team || '?';
+    const visit = game.visit_team || '?';
+
+    let badgeCls, badgeTxt;
+    if      (game.finished)   { badgeCls = 'fin';  badgeTxt = 'Finalizado'; }
+    else if (game.local_team) { badgeCls = 'live'; badgeTxt = 'En curso';   }
+    else                      { badgeCls = 'pend'; badgeTxt = 'Por jugar';  }
+
+    const scoreHtml = game.finished
+      ? `<div class="game-score-box">${game.local_score}&nbsp;–&nbsp;${game.visit_score}</div>`
+      : `<div class="game-score-box tbd">vs</div>`;
+
+    const scored    = (game.predictions || []).filter(p => p.local_score !== null && p.visit_score !== null);
+    const statsHtml = scored.length ? buildGameStats(game, scored) : '';
+
+    return `<div class="game-card-v2">
+      <div class="game-hdr">
+        <div class="game-hdr-meta">
+          <span>Partido ${esc(game.id)}</span>
+          <span class="game-hdr-badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        <div class="game-matchup">
+          <div class="game-team local">
+            <span class="game-team-name">${teamFlag(local)}${esc(local)}</span>
+          </div>
+          ${scoreHtml}
+          <div class="game-team visit">
+            <span class="game-team-name">${teamFlag(visit)}${esc(visit)}</span>
+          </div>
+        </div>
+      </div>
+      ${statsHtml}
+    </div>`;
+  }
+
+  function buildGameStats(game, scored) {
+    const n     = scored.length;
+    const local = game.local_team || '?';
+    const visit = game.visit_team || '?';
+
+    /* ── 1. Predicted result distribution ── */
+    const rc = { local: 0, tie: 0, visit: 0 };
+    for (const p of scored) rc[getResultType(p.local_score, p.visit_score)]++;
+    const localPct = Math.round(rc.local / n * 100);
+    const tiePct   = Math.round(rc.tie   / n * 100);
+    const visitPct = Math.max(0, 100 - localPct - tiePct);
+
+    const realRes = game.finished ? getResultType(game.local_score, game.visit_score) : null;
+    const realLbl = realRes === 'local' ? `<strong>${esc(local)}</strong>`
+                  : realRes === 'visit' ? `<strong>${esc(visit)}</strong>`
+                  : '<strong>Empate</strong>';
+    const resNote = realRes
+      ? `★ Resultado real: ${realLbl} — acertaron ${rc[realRes]} de ${n}`
+      : `${n} predicciones registradas`;
+
+    const resBarHtml = `
+      <div class="stat-box">
+        <div class="stat-box-lbl">Predicción de resultado</div>
+        <div class="res-bar">
+          ${localPct ? `<div class="res-bar-seg" style="width:${localPct}%;background:${RES_COLORS.local}"></div>` : ''}
+          ${tiePct   ? `<div class="res-bar-seg" style="width:${tiePct}%;background:${RES_COLORS.tie}"></div>`     : ''}
+          ${visitPct ? `<div class="res-bar-seg" style="width:${visitPct}%;background:${RES_COLORS.visit}"></div>` : ''}
+        </div>
+        <div class="res-bar-leg">
+          <span><span class="res-bar-leg-dot" style="background:${RES_COLORS.local}"></span>${esc(local)}: ${rc.local} (${localPct}%)</span>
+          <span><span class="res-bar-leg-dot" style="background:${RES_COLORS.tie}"></span>Empate: ${rc.tie} (${tiePct}%)</span>
+          <span><span class="res-bar-leg-dot" style="background:${RES_COLORS.visit}"></span>${esc(visit)}: ${rc.visit} (${visitPct}%)</span>
+        </div>
+        <div class="res-bar-note">${resNote}</div>
+      </div>`;
+
+    /* ── 2. Predicted score distribution ── */
+    const scoreMap = {};
+    for (const p of scored) {
+      const k = `${Math.round(Number(p.local_score))}-${Math.round(Number(p.visit_score))}`;
+      scoreMap[k] = (scoreMap[k] || 0) + 1;
+    }
+    const realKey   = game.finished ? `${game.local_score}-${game.visit_score}` : null;
+    const topScores = Object.entries(scoreMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const maxSc     = topScores[0]?.[1] || 1;
+
+    let scoreRows = '';
+    for (const [sc, cnt] of topScores) {
+      const [ls, vs] = sc.split('-').map(Number);
+      const clr = RES_COLORS[getResultType(ls, vs)];
+      const isR = sc === realKey;
+      scoreRows += `<div class="mbar-row${isR ? ' real' : ''}">
+        <span class="mbar-lbl">${sc}${isR ? ' ★' : ''}</span>
+        <div class="mbar-track"><div class="mbar-fill" style="width:${Math.round(cnt/maxSc*100)}%;background:${clr}"></div></div>
+        <span class="mbar-cnt">${cnt}</span>
+      </div>`;
+    }
+    const scoreBarHtml = `
+      <div class="stat-box">
+        <div class="stat-box-lbl">Marcadores predichos</div>
+        ${scoreRows || '<span style="color:var(--muted);font-size:0.8rem">Sin datos</span>'}
+      </div>`;
+
+    /* ── 3. Points + quick stats (finished games only) ── */
+    let ptsHtml = '';
+    if (game.finished) {
+      const allPreds = game.predictions;
+      const ptsMap   = {};
+      for (const p of allPreds) {
+        const pts = p.points_earned ?? 0;
+        ptsMap[pts] = (ptsMap[pts] || 0) + 1;
+      }
+      const ptsDist = Object.entries(ptsMap).sort((a, b) => Number(a[0]) - Number(b[0]));
+      const maxPts  = Math.max(...ptsDist.map(([, c]) => c));
+
+      let ptsRows = '';
+      for (const [pts, cnt] of ptsDist) {
+        const clr = Number(pts) > 0 ? '#22c55e' : '#d1d5db';
+        ptsRows += `<div class="mbar-row">
+          <span class="mbar-lbl">${pts} pts</span>
+          <div class="mbar-track"><div class="mbar-fill" style="width:${Math.round(cnt/maxPts*100)}%;background:${clr}"></div></div>
+          <span class="mbar-cnt">${cnt}</span>
+        </div>`;
+      }
+
+      const nResult = realRes ? scored.filter(p => getResultType(p.local_score, p.visit_score) === realRes).length : 0;
+      const nExact  = scored.filter(p =>
+        Math.round(Number(p.local_score)) === game.local_score &&
+        Math.round(Number(p.visit_score)) === game.visit_score
+      ).length;
+      const avgL = (scored.reduce((s, p) => s + Number(p.local_score), 0) / n).toFixed(1);
+      const avgV = (scored.reduce((s, p) => s + Number(p.visit_score), 0) / n).toFixed(1);
+
+      ptsHtml = `
+        <div class="stat-box wide">
+          <div class="stat-box-lbl">Puntos ganados por jugador</div>
+          ${ptsRows}
+          <div class="qstats">
+            <div class="qstat">Resultado correcto: <strong>${nResult} / ${n}</strong></div>
+            <div class="qstat">Marcador exacto: <strong>${nExact} / ${n}</strong></div>
+            <div class="qstat">Promedio predicho: <strong>${avgL} – ${avgV}</strong></div>
+          </div>
+        </div>`;
+    }
+
+    return `<div class="game-stats-body">${resBarHtml}${scoreBarHtml}${ptsHtml}</div>`;
   }
 
   // ── View 3: Stage progression ───────────────────────────────────────
