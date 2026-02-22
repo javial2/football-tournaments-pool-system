@@ -358,6 +358,34 @@
     .qstat { background: var(--surface); border-radius: 6px; padding: 0.28rem 0.55rem; font-size: 0.72rem; color: var(--muted); }
     .qstat strong { color: var(--primary); }
 
+    /* ── Player modal: mobile-friendly game list ── */
+    .mgame-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .mgame-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: var(--bg); border-radius: 8px;
+      padding: 0.5rem 0.65rem;
+      border-left: 3px solid transparent;
+    }
+    .mgame-row.mgame-earned { border-left-color: #22c55e; }
+    .mgame-id { font-size: 0.7rem; color: var(--muted); min-width: 1.8rem; text-align: right; font-weight: 600; flex-shrink: 0; }
+    .mgame-body { flex: 1; min-width: 0; }
+    .mgame-line { font-size: 0.82rem; line-height: 1.6; display: flex; align-items: baseline; gap: 0.3rem; flex-wrap: wrap; }
+    .mgame-lbl { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); min-width: 2.2rem; flex-shrink: 0; }
+    .mgame-pts {
+      font-weight: 700; font-size: 0.85rem;
+      min-width: 2rem; text-align: center;
+      padding: 0.25rem 0.45rem; border-radius: 6px;
+      background: var(--border); color: var(--muted);
+      flex-shrink: 0; cursor: default;
+    }
+    .mgame-pts.mgame-pts-win { background: var(--win); color: var(--win-text); }
+    /* Modal: bottom-sheet on mobile */
+    @media (max-width: 640px) {
+      .modal { padding: 0; align-items: flex-end; overflow-y: hidden; }
+      .modal-box { border-radius: 16px 16px 0 0; padding: 1rem 0.75rem; max-height: 90vh; overflow-y: auto; }
+      .modal-header { padding-right: 2rem; }
+    }
+
     .loading {
       text-align: center;
       padding: 3rem;
@@ -700,32 +728,30 @@
       html += `<h3>${formatStageName(stage.nid)}
         ${stagePts ? `<span class="stage-pts">${stagePts}</span>` : ''}
       </h3>`;
-      html += `<table class="data-table" style="margin-bottom:0.75rem">
-        <thead><tr>
-          <th>#</th><th>Resultado Real</th><th>Tu Predicción</th><th>Pts</th>
-        </tr></thead><tbody>`;
-
+      html += `<div class="mgame-list">`;
       for (const g of stage.games) {
         const realStr = g.real_local
           ? (fmtScore(g.real_local_score, g.real_visit_score)
-              ? `${teamFlag(g.real_local)}${esc(g.real_local)} ${g.real_local_score}-${g.real_visit_score} ${teamFlag(g.real_visit)}${esc(g.real_visit)}`
+              ? `${teamFlag(g.real_local)}${esc(g.real_local)} <strong>${g.real_local_score}–${g.real_visit_score}</strong> ${teamFlag(g.real_visit)}${esc(g.real_visit)}`
               : `${teamFlag(g.real_local)}${esc(g.real_local)} vs ${teamFlag(g.real_visit)}${esc(g.real_visit)}`)
-          : '—';
+          : '<span style="color:var(--muted);font-style:italic">Por jugar</span>';
         const predStr = g.pred_local
-          ? `${teamFlag(g.pred_local)}${esc(g.pred_local)} ${g.pred_local_score ?? '?'}-${g.pred_visit_score ?? '?'} ${teamFlag(g.pred_visit)}${esc(g.pred_visit)}`
+          ? `${teamFlag(g.pred_local)}${esc(g.pred_local)} <strong>${g.pred_local_score ?? '?'}–${g.pred_visit_score ?? '?'}</strong> ${teamFlag(g.pred_visit)}${esc(g.pred_visit)}`
           : '—';
-        const ptsCls = g.points_earned > 0 ? 'pts-positive' : '';
+        const earned = g.points_earned > 0;
         const bpAttr = g.points_breakdown?.length
           ? ` data-bp='${JSON.stringify(g.points_breakdown)}'` : '';
 
-        html += `<tr>
-          <td>${g.game_id}</td>
-          <td>${realStr}</td>
-          <td>${predStr}</td>
-          <td class="pts ${ptsCls}"${bpAttr}>${g.points_earned}</td>
-        </tr>`;
+        html += `<div class="mgame-row${earned ? ' mgame-earned' : ''}">
+          <div class="mgame-id">#${g.game_id}</div>
+          <div class="mgame-body">
+            <div class="mgame-line"><span class="mgame-lbl">Real</span><span>${realStr}</span></div>
+            <div class="mgame-line"><span class="mgame-lbl">Pred</span><span>${predStr}</span></div>
+          </div>
+          <div class="mgame-pts${earned ? ' mgame-pts-win' : ''}"${bpAttr}>${g.points_earned}</div>
+        </div>`;
       }
-      html += '</tbody></table>';
+      html += `</div>`;
     }
 
     document.getElementById('modal-content').innerHTML = html;
