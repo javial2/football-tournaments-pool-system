@@ -564,50 +564,54 @@
   // ── Team flags ──────────────────────────────────────────────────────
   function teamFlag(name) {
     if (!name) return '';
-    const flags = {
+    const codes = {
       // Group A
-      'qatar':          '🇶🇦',
-      'ecuador':        '🇪🇨',
-      'senegal':        '🇸🇳',
-      'países bajos':   '🇳🇱', 'holanda': '🇳🇱', 'netherlands': '🇳🇱', 'holland': '🇳🇱',
+      'qatar':          'qa',
+      'ecuador':        'ec',
+      'senegal':        'sn',
+      'países bajos':   'nl', 'holanda': 'nl', 'netherlands': 'nl', 'holland': 'nl',
       // Group B
-      'inglaterra':     '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'england': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-      'irán':           '🇮🇷', 'iran': '🇮🇷',
-      'estados unidos': '🇺🇸', 'ee.uu.': '🇺🇸', 'usa': '🇺🇸', 'united states': '🇺🇸',
-      'gales':          '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+      'inglaterra':     'gb-eng', 'england': 'gb-eng',
+      'irán':           'ir',     'iran': 'ir',
+      'estados unidos': 'us',     'ee.uu.': 'us', 'usa': 'us', 'united states': 'us',
+      'gales':          'gb-wls', 'wales': 'gb-wls',
       // Group C
-      'argentina':      '🇦🇷',
-      'arabia saudita': '🇸🇦', 'saudi arabia': '🇸🇦',
-      'méxico':         '🇲🇽', 'mexico': '🇲🇽',
-      'polonia':        '🇵🇱', 'poland': '🇵🇱',
+      'argentina':      'ar',
+      'arabia saudita': 'sa', 'saudi arabia': 'sa',
+      'méxico':         'mx', 'mexico': 'mx',
+      'polonia':        'pl', 'poland': 'pl',
       // Group D
-      'francia':        '🇫🇷', 'france': '🇫🇷',
-      'australia':      '🇦🇺',
-      'dinamarca':      '🇩🇰', 'denmark': '🇩🇰',
-      'túnez':          '🇹🇳', 'tunez': '🇹🇳', 'tunisia': '🇹🇳',
+      'francia':        'fr', 'france': 'fr',
+      'australia':      'au',
+      'dinamarca':      'dk', 'denmark': 'dk',
+      'túnez':          'tn', 'tunez': 'tn', 'tunisia': 'tn',
       // Group E
-      'españa':         '🇪🇸', 'spain': '🇪🇸',
-      'costa rica':     '🇨🇷',
-      'alemania':       '🇩🇪', 'germany': '🇩🇪',
-      'japón':          '🇯🇵', 'japon': '🇯🇵', 'japan': '🇯🇵',
+      'españa':         'es', 'spain': 'es',
+      'costa rica':     'cr',
+      'alemania':       'de', 'germany': 'de',
+      'japón':          'jp', 'japon': 'jp', 'japan': 'jp',
       // Group F
-      'bélgica':        '🇧🇪', 'belgica': '🇧🇪', 'belgium': '🇧🇪',
-      'canadá':         '🇨🇦', 'canada': '🇨🇦',
-      'marruecos':      '🇲🇦', 'morocco': '🇲🇦',
-      'croacia':        '🇭🇷', 'croatia': '🇭🇷',
+      'bélgica':        'be', 'belgica': 'be', 'belgium': 'be',
+      'canadá':         'ca', 'canada': 'ca',
+      'marruecos':      'ma', 'morocco': 'ma',
+      'croacia':        'hr', 'croatia': 'hr',
       // Group G
-      'brasil':         '🇧🇷', 'brazil': '🇧🇷',
-      'serbia':         '🇷🇸',
-      'suiza':          '🇨🇭', 'switzerland': '🇨🇭',
-      'camerún':        '🇨🇲', 'camerun': '🇨🇲', 'cameroon': '🇨🇲',
+      'brasil':         'br', 'brazil': 'br',
+      'serbia':         'rs',
+      'suiza':          'ch', 'switzerland': 'ch',
+      'camerún':        'cm', 'camerun': 'cm', 'cameroon': 'cm',
       // Group H
-      'portugal':       '🇵🇹',
-      'ghana':          '🇬🇭',
-      'uruguay':        '🇺🇾',
-      'corea del sur':  '🇰🇷', 'south korea': '🇰🇷', 'korea republic': '🇰🇷',
+      'portugal':       'pt',
+      'ghana':          'gh',
+      'uruguay':        'uy',
+      'corea del sur':  'kr', 'south korea': 'kr', 'korea republic': 'kr',
     };
-    const f = flags[name.toLowerCase().trim()];
-    return f ? f + ' ' : '';
+    const code = codes[name.toLowerCase().trim()];
+    if (!code) return '';
+    return `<img src="https://flagcdn.com/w20/${code}.png"
+                 srcset="https://flagcdn.com/w40/${code}.png 2x"
+                 width="20" height="14" alt="${code}"
+                 style="vertical-align:middle;margin-right:4px;border-radius:2px;"> `;
   }
 
   // ── HTML escape ─────────────────────────────────────────────────────
