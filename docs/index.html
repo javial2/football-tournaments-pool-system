@@ -414,7 +414,7 @@
           || '<span class="not-played">Por jugar</span>';
 
         html += `<div class="game-card">
-          <h4>Partido ${game.id}: ${esc(local)} vs ${esc(visit)}</h4>
+          <h4>Partido ${game.id}: ${teamFlag(local)}${esc(local)} vs ${teamFlag(visit)}${esc(visit)}</h4>
           <table class="pred-table"><thead><tr>
             <th>Resultado Real</th>`;
 
@@ -460,7 +460,7 @@
         }
         html += '<div class="team-grid">';
         for (const team of [...teams].sort()) {
-          html += `<div class="team-chip">${esc(team)}</div>`;
+          html += `<div class="team-chip">${teamFlag(team)}${esc(team)}</div>`;
         }
         html += '</div>';
       }
@@ -484,7 +484,7 @@
         <h3><button class="player-link" data-name="${esc(p.name)}">${esc(p.name)}</button></h3>
         <p>Posición: <strong>#${rankMap[p.name] ?? '—'}</strong></p>
         <p>Puntos: <strong>${p.total_points}</strong></p>
-        <p>Campeón: <strong>${esc(p.champion_pick || '—')}</strong>${champBadge}</p>
+        <p>Campeón: <strong>${teamFlag(p.champion_pick)}${esc(p.champion_pick || '—')}</strong>${champBadge}</p>
       </div>`;
     }
     html += '</div>';
@@ -500,7 +500,7 @@
       <h2>${esc(player.name)}</h2>
       <div class="modal-meta">
         Total: <strong>${player.total_points} pts</strong> &nbsp;|&nbsp;
-        Campeón: <strong>${esc(player.champion_pick || '—')}</strong>
+        Campeón: <strong>${teamFlag(player.champion_pick)}${esc(player.champion_pick || '—')}</strong>
         ${player.champion_points > 0 ? `<span class="badge-win">+${player.champion_points} pts</span>` : ''}
       </div>
     </div>`;
@@ -519,11 +519,11 @@
       for (const g of stage.games) {
         const realStr = g.real_local
           ? (fmtScore(g.real_local_score, g.real_visit_score)
-              ? `${esc(g.real_local)} ${g.real_local_score}-${g.real_visit_score} ${esc(g.real_visit)}`
-              : `${esc(g.real_local)} vs ${esc(g.real_visit)}`)
+              ? `${teamFlag(g.real_local)}${esc(g.real_local)} ${g.real_local_score}-${g.real_visit_score} ${teamFlag(g.real_visit)}${esc(g.real_visit)}`
+              : `${teamFlag(g.real_local)}${esc(g.real_local)} vs ${teamFlag(g.real_visit)}${esc(g.real_visit)}`)
           : '—';
         const predStr = g.pred_local
-          ? `${esc(g.pred_local)} ${g.pred_local_score ?? '?'}-${g.pred_visit_score ?? '?'} ${esc(g.pred_visit)}`
+          ? `${teamFlag(g.pred_local)}${esc(g.pred_local)} ${g.pred_local_score ?? '?'}-${g.pred_visit_score ?? '?'} ${teamFlag(g.pred_visit)}${esc(g.pred_visit)}`
           : '—';
         const ptsCls = g.points_earned > 0 ? 'pts-positive' : '';
 
@@ -561,6 +561,55 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closePlayerModal();
     });
+  }
+
+  // ── Team flags ──────────────────────────────────────────────────────
+  function teamFlag(name) {
+    if (!name) return '';
+    const flags = {
+      // Group A
+      'qatar':          '🇶🇦',
+      'ecuador':        '🇪🇨',
+      'senegal':        '🇸🇳',
+      'países bajos':   '🇳🇱', 'holanda': '🇳🇱', 'netherlands': '🇳🇱', 'holland': '🇳🇱',
+      // Group B
+      'inglaterra':     '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'england': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'irán':           '🇮🇷', 'iran': '🇮🇷',
+      'estados unidos': '🇺🇸', 'ee.uu.': '🇺🇸', 'usa': '🇺🇸', 'united states': '🇺🇸',
+      'gales':          '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+      // Group C
+      'argentina':      '🇦🇷',
+      'arabia saudita': '🇸🇦', 'saudi arabia': '🇸🇦',
+      'méxico':         '🇲🇽', 'mexico': '🇲🇽',
+      'polonia':        '🇵🇱', 'poland': '🇵🇱',
+      // Group D
+      'francia':        '🇫🇷', 'france': '🇫🇷',
+      'australia':      '🇦🇺',
+      'dinamarca':      '🇩🇰', 'denmark': '🇩🇰',
+      'túnez':          '🇹🇳', 'tunez': '🇹🇳', 'tunisia': '🇹🇳',
+      // Group E
+      'españa':         '🇪🇸', 'spain': '🇪🇸',
+      'costa rica':     '🇨🇷',
+      'alemania':       '🇩🇪', 'germany': '🇩🇪',
+      'japón':          '🇯🇵', 'japon': '🇯🇵', 'japan': '🇯🇵',
+      // Group F
+      'bélgica':        '🇧🇪', 'belgica': '🇧🇪', 'belgium': '🇧🇪',
+      'canadá':         '🇨🇦', 'canada': '🇨🇦',
+      'marruecos':      '🇲🇦', 'morocco': '🇲🇦',
+      'croacia':        '🇭🇷', 'croatia': '🇭🇷',
+      // Group G
+      'brasil':         '🇧🇷', 'brazil': '🇧🇷',
+      'serbia':         '🇷🇸',
+      'suiza':          '🇨🇭', 'switzerland': '🇨🇭',
+      'camerún':        '🇨🇲', 'camerun': '🇨🇲', 'cameroon': '🇨🇲',
+      // Group H
+      'portugal':       '🇵🇹',
+      'ghana':          '🇬🇭',
+      'uruguay':        '🇺🇾',
+      'corea del sur':  '🇰🇷', 'south korea': '🇰🇷', 'korea republic': '🇰🇷',
+    };
+    const f = flags[name.toLowerCase().trim()];
+    return f ? f + ' ' : '';
   }
 
   // ── HTML escape ─────────────────────────────────────────────────────
