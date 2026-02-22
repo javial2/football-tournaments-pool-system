@@ -386,6 +386,53 @@
       .modal-header { padding-right: 2rem; }
     }
 
+    /* ── About page ── */
+    .about-card {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .about-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .about-card p, .about-card li {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .about-card ul { padding-left: 1.2rem; }
+    .about-card li { margin-bottom: 0.3rem; }
+    .about-placeholder {
+      font-style: italic;
+      color: #aaa;
+      border-left: 3px solid var(--border);
+      padding-left: 0.75rem;
+      margin: 0.5rem 0;
+    }
+    .cartilla-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      padding: 0.6rem 1.1rem;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: background 0.15s;
+    }
+    .cartilla-btn:hover { background: var(--primary-lt); }
+
     .loading {
       text-align: center;
       padding: 3rem;
@@ -414,6 +461,7 @@
   <button class="tab-btn" data-tab="matches">Partidos</button>
   <button class="tab-btn" data-tab="stages">Fases</button>
   <button class="tab-btn" data-tab="players">Jugadores</button>
+  <button class="tab-btn" data-tab="about">Acerca de</button>
 </nav>
 
 <main>
@@ -421,6 +469,7 @@
   <section id="tab-matches"  class="tab-panel"></section>
   <section id="tab-stages"   class="tab-panel"></section>
   <section id="tab-players"  class="tab-panel"></section>
+  <section id="tab-about"    class="tab-panel"></section>
 </main>
 
 <div id="player-modal" class="modal hidden">
@@ -706,6 +755,47 @@
     panel.innerHTML = html;
   }
 
+  // ── View 5: About ───────────────────────────────────────────────────
+  function renderAbout(data) {
+    const panel = document.getElementById('tab-about');
+    const cartilla = data.cartilla_filename;
+
+    let downloadHtml = '';
+    if (cartilla) {
+      downloadHtml = `
+        <a class="cartilla-btn" href="./${cartilla}" download>
+          &#8595; Descargar cartilla (Excel)
+        </a>`;
+    }
+
+    panel.innerHTML = `
+      <h2>Acerca del Pool</h2>
+
+      <div class="about-card">
+        <h3>&#128196; Cómo participar</h3>
+        <p class="about-placeholder">
+          <!-- Aquí van las instrucciones de inscripción. Reemplaza este texto cuando quieras. -->
+          Las instrucciones de inscripción se publicarán próximamente.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>&#128229; Cartilla de predicciones</h3>
+        <p>Descarga la cartilla en formato Excel, completa tus predicciones y envíala según las instrucciones.</p>
+        ${downloadHtml || '<p class="about-placeholder">La cartilla no está disponible aún.</p>'}
+      </div>
+
+      <div class="about-card">
+        <h3>&#127942; Sistema de puntos</h3>
+        <ul>
+          <li><strong>Equipos</strong>: puntos por predecir correctamente qué equipos juegan en cada partido.</li>
+          <li><strong>Resultado</strong>: puntos por acertar el resultado (local, empate o visita).</li>
+          <li><strong>Marcador</strong>: puntos por acertar el marcador exacto.</li>
+          <li><strong>Campeón</strong>: puntos extra por haber predicho al campeón del torneo.</li>
+        </ul>
+      </div>`;
+  }
+
   // ── Player detail modal ─────────────────────────────────────────────
   function openPlayerModal(playerName) {
     const player = appPlayers.find(p => p.name === playerName);
@@ -822,6 +912,15 @@
       'ghana':          'gh',
       'uruguay':        'uy',
       'corea del sur':  'kr', 'south korea': 'kr', 'korea republic': 'kr',
+      // Copa América teams (not already listed above)
+      'perú':           'pe', 'peru': 'pe',
+      'chile':          'cl',
+      'jamaica':        'jm',
+      'venezuela':      've',
+      'bolivia':        'bo',
+      'panamá':         'pa', 'panama': 'pa',
+      'colombia':       'co',
+      'paraguay':       'py',
     };
     const code = codes[name.toLowerCase().trim()];
     if (!code) return '';
@@ -908,6 +1007,7 @@
     renderMatches(data.stages, data.ranking);
     renderStages(data.stages);
     renderPlayers(data.players, data.ranking);
+    renderAbout(data);
 
     setupTabs();
     setupEvents();

@@ -1,8 +1,10 @@
 from src.utils.create_and_load_tournament import load_tournament
 import src.points_calculator.game_points as gpc
 
+import glob
 import json
 import os
+import shutil
 import http.server
 import socketserver
 from argparse import ArgumentParser
@@ -135,12 +137,21 @@ def build_players(T):
     return players_out
 
 
-def build_export(T):
+def find_cartilla(instance_path):
+    """Return the filename of the CARTILLA xlsx in the instance folder, or None."""
+    matches = glob.glob(os.path.join(instance_path, "CARTILLA*.xlsx"))
+    if matches:
+        return os.path.basename(matches[0])
+    return None
+
+
+def build_export(T, cartilla_filename=None):
     return {
-        "tournament_name": T.name,
-        "ranking":         build_ranking(T),
-        "stages":          build_stages(T),
-        "players":         build_players(T)
+        "tournament_name":   T.name,
+        "cartilla_filename": cartilla_filename,
+        "ranking":           build_ranking(T),
+        "stages":            build_stages(T),
+        "players":           build_players(T)
     }
 
 
@@ -163,11 +174,13 @@ if __name__ == "__main__":
     T.update_players_points()
     print(f"Loaded {len(T.players)} players, {T.number_of_games()} games.")
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    WEB_DIR  = os.path.join(BASE_DIR, "web")
+    BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+    WEB_DIR       = os.path.join(BASE_DIR, "web")
+    INSTANCE_DIR  = os.path.join(BASE_DIR, "instances", args.instance)
     os.makedirs(WEB_DIR, exist_ok=True)
 
-    data = build_export(T)
+    cartilla_filename = find_cartilla(INSTANCE_DIR)
+    data = build_export(T, cartilla_filename)
 
     if args.export:
         # Embed data into index.html and write to docs/ for GitHub Pages deployment
@@ -187,14 +200,22 @@ if __name__ == "__main__":
         out_path = os.path.join(docs_dir, "index.html")
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(standalone)
+        if cartilla_filename:
+            shutil.copy2(os.path.join(INSTANCE_DIR, cartilla_filename),
+                         os.path.join(docs_dir, cartilla_filename))
+            print(f"Cartilla copied to docs/{cartilla_filename}")
         print(f"Exported to {out_path}")
-        print("Commit docs/index.html and push — GitHub Pages will update automatically.")
+        print("Commit docs/ and push — GitHub Pages will update automatically.")
     else:
         # Write data.json and start local server
         output_path = os.path.join(WEB_DIR, "data.json")
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Data written to {output_path}")
+        if cartilla_filename:
+            shutil.copy2(os.path.join(INSTANCE_DIR, cartilla_filename),
+                         os.path.join(WEB_DIR, cartilla_filename))
+            print(f"Cartilla copied to web/{cartilla_filename}")
 
         Handler = lambda *args, **kwargs: http.server.SimpleHTTPRequestHandler(
             *args, directory=WEB_DIR, **kwargs
