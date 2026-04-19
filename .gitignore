@@ -1,12 +1,6 @@
 /venv
 
-instances/*/players_files/
-instances/*/database/
-instances/*/stats/
-instances/**/*.xlsx
-instances/**/*.xls
-instances/**/*.csv
-instances/**/*.png
+/instances/
 
 __pycache__/
 *.pyc
