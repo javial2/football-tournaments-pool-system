@@ -1,0 +1,116 @@
+{
+    "tournament_name": "Test Qatar 2022",
+    "players_database": "database/players_database.json",
+    "results_database": "database/results_database.json",
+    "stats_folder": "stats/",
+    "results_xlsx": "RESULTADOS_REALES.xlsx",
+    "ranges_xlsx": "RANGOS_QATAR_2022.xlsx",
+    "upload_rank_to_drive": true,
+    "drive_configuration": {
+        "sheet_id": "1R5A6dwfBxVaYNTIZJEFQzWRNzDjedwMKQ1HcmTAnsmM",
+        "sheet_name": "Hoja 1",
+        "credentials_filename": "google_client.json"
+    },
+    "tournament_stages": {
+        "groups": {
+            "nid": "groups",
+            "order": 1,
+            "games": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "19",
+                "20",
+                "21",
+                "22",
+                "23",
+                "24",
+                "25",
+                "26",
+                "27",
+                "28",
+                "29",
+                "30",
+                "31",
+                "32",
+                "33",
+                "34",
+                "35",
+                "36",
+                "37",
+                "38",
+                "39",
+                "40",
+                "41",
+                "42",
+                "43",
+                "44",
+                "45",
+                "46",
+                "47",
+                "48"
+            ]
+        },
+        "top-16": {
+            "nid": "top-16",
+            "order": 2,
+            "games": [
+                "49",
+                "50",
+                "51",
+                "52",
+                "53",
+                "54",
+                "55",
+                "56"
+            ]
+        },
+        "top-8": {
+            "nid": "top-8",
+            "order": 3,
+            "games": [
+                "57",
+                "58",
+                "59",
+                "60"
+            ]
+        },
+        "top-4": {
+            "nid": "top-4",
+            "order": 4,
+            "games": [
+                "61",
+                "62"
+            ]
+        },
+        "finals": {
+            "nid": "finals",
+            "order": 5,
+            "games": [
+                "64"
+            ]
+        },
+        "third-place": {
+            "nid": "third-place",
+            "order": 6,
+            "games": [
+                "63"
+            ]
+        }
+    }
+}

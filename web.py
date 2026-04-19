@@ -147,11 +147,20 @@ def find_cartilla(instance_path):
     return None
 
 
-def build_export(T, cartilla_filename=None):
+def load_bracket(instance_path):
+    path = os.path.join(instance_path, "config", "bracket.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def build_export(T, cartilla_filename=None, bracket=None):
     return {
         "tournament_name":   T.name,
         "cartilla_filename": cartilla_filename,
         "last_updated":      datetime.now(ZoneInfo("America/Santiago")).strftime("%d-%m-%Y %H:%M"),
+        "bracket":           bracket,
         "ranking":           build_ranking(T),
         "stages":            build_stages(T),
         "players":           build_players(T)
@@ -183,7 +192,8 @@ if __name__ == "__main__":
     os.makedirs(WEB_DIR, exist_ok=True)
 
     cartilla_filename = find_cartilla(INSTANCE_DIR)
-    data = build_export(T, cartilla_filename)
+    bracket = load_bracket(INSTANCE_DIR)
+    data = build_export(T, cartilla_filename, bracket)
 
     if args.export:
         # Embed data into index.html and write to docs/ for GitHub Pages deployment

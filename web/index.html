@@ -564,6 +564,15 @@
       text-align: right;
       flex-shrink: 0;
     }
+    .bracket-pair { margin-bottom: 0.3rem; }
+    .bracket-pair-gap { margin-bottom: 1rem; }
+    .bracket-fed {
+      font-size: 0.68rem;
+      color: var(--muted);
+      padding: 0.15rem 0.6rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -943,29 +952,79 @@
 
     // ── Knockout bracket ──
     if (knockoutStages.length > 0) {
-      html += '<h3 class="section-title">Fase Eliminatoria</h3><div class="bracket">';
-      for (const stage of knockoutStages) {
-        html += `<div class="bracket-round">
-          <div class="bracket-round-title">${formatStageName(stage.nid)}</div>`;
-        for (const game of stage.games) {
-          const h = game.local_team;
-          const a = game.visit_team;
-          const hWin = game.finished && game.local_score > game.visit_score;
-          const aWin = game.finished && game.visit_score > game.local_score;
-          html += `<div class="bracket-match">
-            <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
-              <span>${h ? teamFlag(h) + esc(h) : 'Por definir'}</span>
-              <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
-            </div>
-            <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
-              <span>${a ? teamFlag(a) + esc(a) : 'Por definir'}</span>
-              <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
-            </div>
-          </div>`;
+      html += '<h3 class="section-title">Fase Eliminatoria</h3>';
+      const bracket = (window.__DATA__ || {}).bracket;
+      const gameById = {};
+      for (const stage of stages) {
+        for (const game of stage.games) gameById[game.id] = game;
+      }
+
+      if (bracket) {
+        html += '<div class="bracket">';
+        for (const round of bracket.rounds) {
+          const stage = stages.find(s => s.nid === round.stage_nid);
+          if (!stage) continue;
+          html += `<div class="bracket-round">
+            <div class="bracket-round-title">${formatStageName(round.stage_nid)}</div>`;
+
+          // Group matches in pairs (each pair feeds the same next-round match)
+          const pairSize = 2;
+          for (let i = 0; i < round.matches.length; i += pairSize) {
+            const pair = round.matches.slice(i, i + pairSize);
+            const isLast = i + pairSize >= round.matches.length;
+            html += `<div class="bracket-pair${isLast ? '' : ' bracket-pair-gap'}">`;
+            for (const meta of pair) {
+              const game = gameById[meta.id];
+              if (!game) continue;
+              const h = game.local_team;
+              const a = game.visit_team;
+              const hWin = game.finished && game.local_score > game.visit_score;
+              const aWin = game.finished && game.visit_score > game.local_score;
+              const fedNote = (!h || !a) && meta.fed_by
+                ? `<div class="bracket-fed">${meta.losers ? 'Perdedor' : 'Ganador'} P${meta.fed_by[0]} / ${meta.losers ? 'Perdedor' : 'Ganador'} P${meta.fed_by[1]}</div>`
+                : '';
+              html += `<div class="bracket-match">
+                ${fedNote}
+                <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
+                  <span>${h ? teamFlag(h) + esc(h) : '—'}</span>
+                  <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
+                </div>
+                <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
+                  <span>${a ? teamFlag(a) + esc(a) : '—'}</span>
+                  <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
+                </div>
+              </div>`;
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+      } else {
+        // Fallback: no bracket.json, list rounds sequentially
+        html += '<div class="bracket">';
+        for (const stage of knockoutStages) {
+          html += `<div class="bracket-round">
+            <div class="bracket-round-title">${formatStageName(stage.nid)}</div>`;
+          for (const game of stage.games) {
+            const h = game.local_team, a = game.visit_team;
+            const hWin = game.finished && game.local_score > game.visit_score;
+            const aWin = game.finished && game.visit_score > game.local_score;
+            html += `<div class="bracket-match">
+              <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
+                <span>${h ? teamFlag(h) + esc(h) : '—'}</span>
+                <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
+              </div>
+              <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
+                <span>${a ? teamFlag(a) + esc(a) : '—'}</span>
+                <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
+              </div>
+            </div>`;
+          }
+          html += '</div>';
         }
         html += '</div>';
       }
-      html += '</div>';
     }
 
     panel.innerHTML = html;
