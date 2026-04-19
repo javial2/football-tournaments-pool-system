@@ -594,7 +594,7 @@
 
     let badgeCls, badgeTxt;
     if      (game.finished)   { badgeCls = 'fin';  badgeTxt = 'Finalizado'; }
-    else if (game.local_team) { badgeCls = 'live'; badgeTxt = 'En curso';   }
+    else if (game.local_team) { badgeCls = 'live'; badgeTxt = 'Por jugar';  }
     else                      { badgeCls = 'pend'; badgeTxt = 'Por jugar';  }
 
     const scoreHtml = game.finished
