@@ -511,68 +511,102 @@
     .standings-table tr.qualified-1 td:last-child,
     .standings-table tr.qualified-2 td:last-child { color: var(--win-text); font-weight: 700; }
 
-    /* ── Bracket view ── */
-    .bracket {
+    /* ── Bracket tree ── */
+    .b-tree {
       display: flex;
-      gap: 1rem;
+      align-items: stretch;
       overflow-x: auto;
-      padding-bottom: 0.5rem;
-      align-items: flex-start;
+      padding: 0.5rem 0 1rem;
     }
-    .bracket-round {
-      flex: 0 0 auto;
-      min-width: 180px;
-    }
-    .bracket-round-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.25rem;
-      border-bottom: 2px solid var(--primary);
-      white-space: nowrap;
-    }
-    .bracket-match {
-      background: var(--surface);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      margin-bottom: 0.6rem;
-      overflow: hidden;
-    }
-    .bracket-team {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.35rem 0.6rem;
-      font-size: 0.82rem;
-      gap: 0.5rem;
-    }
-    .bracket-team + .bracket-team {
-      border-top: 1px solid var(--border);
-    }
-    .bracket-team.winner {
-      background: var(--win);
-      font-weight: 700;
-      color: var(--win-text);
-    }
-    .bracket-team.tbd { color: var(--muted); font-style: italic; }
-    .bracket-score {
-      font-weight: 700;
-      min-width: 1.2rem;
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .bracket-pair { margin-bottom: 0.3rem; }
-    .bracket-pair-gap { margin-bottom: 1rem; }
-    .bracket-fed {
+    .b-half { display: flex; gap: 20px; }
+    .b-half.b-right { flex-direction: row-reverse; }
+    .b-col { display: flex; flex-direction: column; width: 148px; }
+    .b-col-hdr {
+      text-align: center;
       font-size: 0.68rem;
-      color: var(--muted);
-      padding: 0.15rem 0.6rem;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      padding: 3px 4px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    .b-col-body { display: flex; flex-direction: column; flex: 1; }
+    .b-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      flex: 1;
+      position: relative;
+    }
+    .b-slot { position: relative; padding: 2px 0; display: flex; align-items: center; }
+
+    /* Left half: connectors go right */
+    .b-left .b-group::after {
+      content: ''; position: absolute;
+      right: -20px; top: 25%; height: 50%;
+      border-right: 1.5px solid var(--border);
+    }
+    .b-left .b-slot::after {
+      content: ''; position: absolute;
+      right: -20px; top: 50%; width: 20px;
+      border-top: 1.5px solid var(--border);
+    }
+    .b-left .b-group.b-solo::after { display: none; }
+
+    /* Right half: connectors go left */
+    .b-right .b-group::after {
+      content: ''; position: absolute;
+      left: -20px; top: 25%; height: 50%;
+      border-left: 1.5px solid var(--border);
+    }
+    .b-right .b-slot::after {
+      content: ''; position: absolute;
+      left: -20px; top: 50%; width: 20px;
+      border-top: 1.5px solid var(--border);
+    }
+    .b-right .b-group.b-solo::after { display: none; }
+
+    /* Match card */
+    .bmc {
+      background: var(--surface);
+      border-radius: 5px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      width: 100%;
+      font-size: 0.74rem;
+    }
+    .bmc-num {
+      font-size: 0.62rem; color: var(--muted);
+      text-align: center; padding: 1px 4px;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .bmc-team {
+      display: flex; justify-content: space-between;
+      align-items: center; padding: 0.2rem 0.35rem;
+      gap: 0.2rem; min-height: 22px;
+    }
+    .bmc-team + .bmc-team { border-top: 1px solid var(--border); }
+    .bmc-winner { background: var(--win); color: var(--win-text); font-weight: 700; }
+    .bmc-tbd { color: var(--muted); font-style: italic; }
+    .bmc-score { font-weight: 700; min-width: 14px; text-align: right; flex-shrink: 0; }
+
+    /* Center panel */
+    .b-center {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.4rem; padding: 0 16px; min-width: 156px;
+    }
+    .b-center-title {
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--primary); text-transform: uppercase;
+      letter-spacing: 0.05em; text-align: center;
+    }
+    .b-third-title { margin-top: 1.5rem; }
   </style>
 </head>
 <body>
@@ -953,72 +987,77 @@
     // ── Knockout bracket ──
     if (knockoutStages.length > 0) {
       html += '<h3 class="section-title">Fase Eliminatoria</h3>';
-      const bracket = (window.__DATA__ || {}).bracket;
+      const bracketDef = (window.__DATA__ || {}).bracket;
+
       const gameById = {};
       for (const stage of stages) {
         for (const game of stage.games) gameById[game.id] = game;
       }
 
-      if (bracket) {
-        html += '<div class="bracket">';
-        for (const round of bracket.rounds) {
-          const stage = stages.find(s => s.nid === round.stage_nid);
-          if (!stage) continue;
-          html += `<div class="bracket-round">
-            <div class="bracket-round-title">${formatStageName(round.stage_nid)}</div>`;
+      function bMatchCard(gameId) {
+        const game = gameById[gameId];
+        if (!game) return `<div class="bmc"><div class="bmc-team bmc-tbd"><span>—</span></div></div>`;
+        const h = game.local_team, a = game.visit_team;
+        const hWin = game.finished && Number(game.local_score) > Number(game.visit_score);
+        const aWin = game.finished && Number(game.visit_score) > Number(game.local_score);
+        return `<div class="bmc">
+          <div class="bmc-num">P${esc(gameId)}</div>
+          <div class="bmc-team${hWin ? ' bmc-winner' : ''}${!h ? ' bmc-tbd' : ''}">
+            <span>${h ? teamFlag(h)+esc(h) : '—'}</span>
+            <span class="bmc-score">${game.finished ? game.local_score : ''}</span>
+          </div>
+          <div class="bmc-team${aWin ? ' bmc-winner' : ''}${!a ? ' bmc-tbd' : ''}">
+            <span>${a ? teamFlag(a)+esc(a) : '—'}</span>
+            <span class="bmc-score">${game.finished ? game.visit_score : ''}</span>
+          </div>
+        </div>`;
+      }
 
-          // Group matches in pairs (each pair feeds the same next-round match)
-          const pairSize = 2;
-          for (let i = 0; i < round.matches.length; i += pairSize) {
-            const pair = round.matches.slice(i, i + pairSize);
-            const isLast = i + pairSize >= round.matches.length;
-            html += `<div class="bracket-pair${isLast ? '' : ' bracket-pair-gap'}">`;
-            for (const meta of pair) {
-              const game = gameById[meta.id];
-              if (!game) continue;
-              const h = game.local_team;
-              const a = game.visit_team;
-              const hWin = game.finished && game.local_score > game.visit_score;
-              const aWin = game.finished && game.visit_score > game.local_score;
-              const fedNote = (!h || !a) && meta.fed_by
-                ? `<div class="bracket-fed">${meta.losers ? 'Perdedor' : 'Ganador'} P${meta.fed_by[0]} / ${meta.losers ? 'Perdedor' : 'Ganador'} P${meta.fed_by[1]}</div>`
-                : '';
-              html += `<div class="bracket-match">
-                ${fedNote}
-                <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
-                  <span>${h ? teamFlag(h) + esc(h) : '—'}</span>
-                  <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
-                </div>
-                <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
-                  <span>${a ? teamFlag(a) + esc(a) : '—'}</span>
-                  <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
-                </div>
-              </div>`;
-            }
-            html += '</div>';
-          }
-          html += '</div>';
+      function bCol(round) {
+        const ms = round.matches;
+        let body = '';
+        for (let i = 0; i < ms.length; i += 2) {
+          const solo = i + 1 >= ms.length;
+          body += `<div class="b-group${solo ? ' b-solo' : ''}">`;
+          body += `<div class="b-slot">${bMatchCard(ms[i])}</div>`;
+          if (!solo) body += `<div class="b-slot">${bMatchCard(ms[i+1])}</div>`;
+          body += '</div>';
         }
+        return `<div class="b-col">
+          <div class="b-col-hdr">${formatStageName(round.stage_nid)}</div>
+          <div class="b-col-body">${body}</div>
+        </div>`;
+      }
+
+      if (bracketDef && bracketDef.left && bracketDef.right) {
+        html += '<div class="b-tree">';
+        html += '<div class="b-half b-left">';
+        for (const round of bracketDef.left) html += bCol(round);
+        html += '</div>';
+
+        html += '<div class="b-center">';
+        html += `<div class="b-center-title">&#127942; Final</div>`;
+        html += bMatchCard(bracketDef.final);
+        if (bracketDef.third_place) {
+          html += `<div class="b-center-title b-third-title">3er Lugar</div>`;
+          html += bMatchCard(bracketDef.third_place.id);
+        }
+        html += '</div>';
+
+        html += '<div class="b-half b-right">';
+        for (const round of bracketDef.right) html += bCol(round);
+        html += '</div>';
         html += '</div>';
       } else {
         // Fallback: no bracket.json, list rounds sequentially
-        html += '<div class="bracket">';
+        html += '<div style="display:flex;gap:1rem;overflow-x:auto">';
         for (const stage of knockoutStages) {
-          html += `<div class="bracket-round">
-            <div class="bracket-round-title">${formatStageName(stage.nid)}</div>`;
+          html += `<div style="min-width:160px"><div class="bracket-round-title">${formatStageName(stage.nid)}</div>`;
           for (const game of stage.games) {
             const h = game.local_team, a = game.visit_team;
-            const hWin = game.finished && game.local_score > game.visit_score;
-            const aWin = game.finished && game.visit_score > game.local_score;
-            html += `<div class="bracket-match">
-              <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
-                <span>${h ? teamFlag(h) + esc(h) : '—'}</span>
-                <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
-              </div>
-              <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
-                <span>${a ? teamFlag(a) + esc(a) : '—'}</span>
-                <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
-              </div>
+            html += `<div class="bmc" style="margin-bottom:6px">
+              <div class="bmc-team${!h ? ' bmc-tbd' : ''}">${h ? teamFlag(h)+esc(h) : '—'}</div>
+              <div class="bmc-team${!a ? ' bmc-tbd' : ''}">${a ? teamFlag(a)+esc(a) : '—'}</div>
             </div>`;
           }
           html += '</div>';
