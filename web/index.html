@@ -545,19 +545,46 @@
   function renderMatches(stages, ranking) {
     const panel = document.getElementById('tab-matches');
     let html = '<h2>Resultados y Predicciones</h2>';
-    for (const stage of stages) {
-      const label    = formatStageName(stage.nid);
-      const badge    = stage.finished ? 'Finalizada' : stage.started ? 'En curso' : 'No iniciada';
-      const openAttr = stage.order > 1 ? ' open' : '';
-      html += `<details${openAttr}>
+
+    // A stage can only be "En curso" if all previous stages are finished
+    let prevAllDone = true;
+    const enriched = stages.map(stage => {
+      const effectiveStarted = stage.started && prevAllDone;
+      prevAllDone = prevAllDone && stage.finished;
+      return { ...stage, effectiveStarted };
+    });
+
+    // Collect next 4 upcoming games (only from effectively started stages, sorted by game ID)
+    const upcoming = [];
+    for (const stage of enriched) {
+      if (!stage.effectiveStarted) continue;
+      for (const game of stage.games) {
+        if (!game.finished) upcoming.push(game);
+      }
+    }
+    upcoming.sort((a, b) => Number(a.id) - Number(b.id));
+    const nextFourIds = new Set(upcoming.slice(0, 4).map(g => g.id));
+
+    for (const stage of enriched) {
+      const label = formatStageName(stage.nid);
+      const badge = stage.finished        ? 'Finalizada'
+                  : stage.effectiveStarted ? 'En curso'
+                  : 'No iniciada';
+
+      const gamesToShow = stage.games.filter(g =>
+        stage.effectiveStarted && (g.finished || nextFourIds.has(g.id))
+      );
+      if (gamesToShow.length === 0) continue;
+
+      html += `<details open>
         <summary>${label} <span class="badge">${badge}</span></summary>
         <div class="games-list">`;
-      for (const game of stage.games) {
-        if (!game.local_team && !game.visit_team) continue;
+      for (const game of gamesToShow) {
         html += buildGameCard(game);
       }
       html += '</div></details>';
     }
+
     panel.innerHTML = html;
   }
 
