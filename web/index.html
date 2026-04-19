@@ -447,6 +447,123 @@
       border-radius: 8px;
       margin: 1rem 0;
     }
+
+    /* ── Grupos view ── */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 1.5rem 0 0.75rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .group-card {
+      background: var(--surface);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .group-card-title {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .standings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .standings-table thead tr {
+      background: var(--bg);
+    }
+    .standings-table th {
+      padding: 0.35rem 0.4rem;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .standings-table th.th-team { text-align: left; padding-left: 0.6rem; }
+    .standings-table td {
+      padding: 0.35rem 0.4rem;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    .standings-table td.td-team {
+      text-align: left;
+      padding-left: 0.6rem;
+      white-space: nowrap;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .standings-table tr.qualified-1 td { background: #e8f5e9; }
+    .standings-table tr.qualified-2 td { background: #e8f5e9; }
+    .standings-table tr.qualified-3 td { background: #fffde7; }
+    .standings-table tr.qualified-1 td:last-child,
+    .standings-table tr.qualified-2 td:last-child { color: var(--win-text); font-weight: 700; }
+
+    /* ── Bracket view ── */
+    .bracket {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      align-items: flex-start;
+    }
+    .bracket-round {
+      flex: 0 0 auto;
+      min-width: 180px;
+    }
+    .bracket-round-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 2px solid var(--primary);
+      white-space: nowrap;
+    }
+    .bracket-match {
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 0.6rem;
+      overflow: hidden;
+    }
+    .bracket-team {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.82rem;
+      gap: 0.5rem;
+    }
+    .bracket-team + .bracket-team {
+      border-top: 1px solid var(--border);
+    }
+    .bracket-team.winner {
+      background: var(--win);
+      font-weight: 700;
+      color: var(--win-text);
+    }
+    .bracket-team.tbd { color: var(--muted); font-style: italic; }
+    .bracket-score {
+      font-weight: 700;
+      min-width: 1.2rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -462,6 +579,7 @@
 <nav id="tab-nav">
   <button class="tab-btn active" data-tab="ranking">Tabla</button>
   <button class="tab-btn" data-tab="matches">Partidos</button>
+  <button class="tab-btn" data-tab="groups">Grupos</button>
   <button class="tab-btn" data-tab="stages">Fases</button>
   <button class="tab-btn" data-tab="players">Jugadores</button>
   <button class="tab-btn" data-tab="about">Acerca de</button>
@@ -470,6 +588,7 @@
 <main>
   <section id="tab-ranking"  class="tab-panel active"><div class="loading">Cargando datos...</div></section>
   <section id="tab-matches"  class="tab-panel"></section>
+  <section id="tab-groups"   class="tab-panel"></section>
   <section id="tab-stages"   class="tab-panel"></section>
   <section id="tab-players"  class="tab-panel"></section>
   <section id="tab-about"    class="tab-panel"></section>
@@ -732,7 +851,127 @@
     return `<div class="game-stats-body">${resBarHtml}${scoreBarHtml}${ptsHtml}</div>`;
   }
 
-  // ── View 3: Stage progression ───────────────────────────────────────
+  // ── View 3: Groups & Bracket ────────────────────────────────────────
+  function computeGroups(groupStage) {
+    const adj = {};
+    const teamOrder = [];
+    for (const game of groupStage.games) {
+      const { local_team: h, visit_team: a } = game;
+      if (h && !teamOrder.includes(h)) teamOrder.push(h);
+      if (a && !teamOrder.includes(a)) teamOrder.push(a);
+      if (h && a) {
+        (adj[h] = adj[h] || new Set()).add(a);
+        (adj[a] = adj[a] || new Set()).add(h);
+      }
+    }
+    const visited = new Set();
+    const groups = [];
+    for (const team of teamOrder) {
+      if (visited.has(team)) continue;
+      const group = [];
+      const queue = [team];
+      while (queue.length) {
+        const t = queue.shift();
+        if (visited.has(t)) continue;
+        visited.add(t);
+        group.push(t);
+        for (const nb of (adj[t] || [])) if (!visited.has(nb)) queue.push(nb);
+      }
+      groups.push(group);
+    }
+    return groups;
+  }
+
+  function computeStandings(teams, games) {
+    const s = {};
+    for (const t of teams) s[t] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+    for (const g of games) {
+      if (!g.finished || g.local_score === null || g.visit_score === null) continue;
+      const h = g.local_team, a = g.visit_team;
+      if (!s[h] || !s[a]) continue;
+      const hs = Number(g.local_score), as_ = Number(g.visit_score);
+      s[h].p++; s[a].p++;
+      s[h].gf += hs; s[h].ga += as_;
+      s[a].gf += as_; s[a].ga += hs;
+      if (hs > as_)      { s[h].w++; s[h].pts += 3; s[a].l++; }
+      else if (hs < as_) { s[a].w++; s[a].pts += 3; s[h].l++; }
+      else               { s[h].d++; s[h].pts++;     s[a].d++; s[a].pts++; }
+    }
+    return Object.entries(s)
+      .map(([team, r]) => ({ team, ...r, gd: r.gf - r.ga }))
+      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+  }
+
+  function renderGroups(stages) {
+    const panel = document.getElementById('tab-groups');
+    const groupStage   = stages.find(s => s.order === 1);
+    const knockoutStages = stages.filter(s => s.order > 1).sort((a, b) => a.order - b.order);
+    let html = '<h2>Grupos y Llaves</h2>';
+
+    // ── Group standings ──
+    if (groupStage) {
+      html += '<h3 class="section-title">Fase de Grupos</h3><div class="groups-grid">';
+      const groups = computeGroups(groupStage);
+      groups.forEach((teams, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const groupGames = groupStage.games.filter(g =>
+          teams.includes(g.local_team) && teams.includes(g.visit_team)
+        );
+        const rows = computeStandings(teams, groupGames);
+        html += `<div class="group-card">
+          <div class="group-card-title">Grupo ${letter}</div>
+          <table class="standings-table">
+            <thead><tr>
+              <th class="th-team">Equipo</th>
+              <th>PJ</th><th>G</th><th>E</th><th>P</th>
+              <th>GF</th><th>GC</th><th>DG</th><th>Pts</th>
+            </tr></thead><tbody>`;
+        rows.forEach((r, rank) => {
+          const cls = rank === 0 ? 'qualified-1' : rank === 1 ? 'qualified-2' : rank === 2 ? 'qualified-3' : '';
+          const gd = r.gd > 0 ? `+${r.gd}` : r.gd;
+          html += `<tr class="${cls}">
+            <td class="td-team">${teamFlag(r.team)}${esc(r.team)}</td>
+            <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+            <td>${r.gf}</td><td>${r.ga}</td><td>${gd}</td>
+            <td><strong>${r.pts}</strong></td>
+          </tr>`;
+        });
+        html += '</tbody></table></div>';
+      });
+      html += '</div>';
+    }
+
+    // ── Knockout bracket ──
+    if (knockoutStages.length > 0) {
+      html += '<h3 class="section-title">Fase Eliminatoria</h3><div class="bracket">';
+      for (const stage of knockoutStages) {
+        html += `<div class="bracket-round">
+          <div class="bracket-round-title">${formatStageName(stage.nid)}</div>`;
+        for (const game of stage.games) {
+          const h = game.local_team;
+          const a = game.visit_team;
+          const hWin = game.finished && game.local_score > game.visit_score;
+          const aWin = game.finished && game.visit_score > game.local_score;
+          html += `<div class="bracket-match">
+            <div class="bracket-team${hWin ? ' winner' : ''}${!h ? ' tbd' : ''}">
+              <span>${h ? teamFlag(h) + esc(h) : 'Por definir'}</span>
+              <span class="bracket-score">${game.finished ? game.local_score : ''}</span>
+            </div>
+            <div class="bracket-team${aWin ? ' winner' : ''}${!a ? ' tbd' : ''}">
+              <span>${a ? teamFlag(a) + esc(a) : 'Por definir'}</span>
+              <span class="bracket-score">${game.finished ? game.visit_score : ''}</span>
+            </div>
+          </div>`;
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    panel.innerHTML = html;
+  }
+
+  // ── View 4: Stage progression ───────────────────────────────────────
   function renderStages(stages) {
     const panel = document.getElementById('tab-stages');
     const knockout = stages
@@ -1076,6 +1315,7 @@
 
     renderRanking(data.ranking);
     renderMatches(data.stages, data.ranking);
+    renderGroups(data.stages);
     renderStages(data.stages);
     renderPlayers(data.players, data.ranking);
     renderAbout(data);
