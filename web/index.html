@@ -735,9 +735,8 @@
   // ── View 3: Stage progression ───────────────────────────────────────
   function renderStages(stages) {
     const panel = document.getElementById('tab-stages');
-    const knockoutNids = ['top_16', 'top_8', 'top_4', 'finals', 'third_place'];
     const knockout = stages
-      .filter(s => knockoutNids.includes(s.nid))
+      .filter(s => s.order > 1)
       .sort((a, b) => a.order - b.order);
 
     let html = '<h2>Progresión de Fases</h2>';
