@@ -8,7 +8,8 @@ import shutil
 import http.server
 import socketserver
 from argparse import ArgumentParser
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 _BP_LABELS = {
@@ -150,7 +151,7 @@ def build_export(T, cartilla_filename=None):
     return {
         "tournament_name":   T.name,
         "cartilla_filename": cartilla_filename,
-        "last_updated":      datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "last_updated":      datetime.now(ZoneInfo("America/Santiago")).strftime("%d-%m-%Y %H:%M"),
         "ranking":           build_ranking(T),
         "stages":            build_stages(T),
         "players":           build_players(T)
