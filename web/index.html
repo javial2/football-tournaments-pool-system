@@ -453,7 +453,10 @@
 
 <header>
   <span class="ball">⚽</span>
-  <h1 id="tournament-name">Cargando...</h1>
+  <div>
+    <h1 id="tournament-name">Cargando...</h1>
+    <div id="last-updated" style="font-size:0.75rem;opacity:0.7;margin-top:2px;"></div>
+  </div>
 </header>
 
 <nav id="tab-nav">
@@ -1039,6 +1042,9 @@
 
     document.title = data.tournament_name + ' — Pool';
     document.getElementById('tournament-name').textContent = data.tournament_name;
+    if (data.last_updated) {
+      document.getElementById('last-updated').textContent = 'Actualizado: ' + data.last_updated;
+    }
 
     renderRanking(data.ranking);
     renderMatches(data.stages, data.ranking);
