@@ -846,8 +846,10 @@
       html += `<h3>${formatStageName(stage.nid)}
         ${stagePts ? `<span class="stage-pts">${stagePts}</span>` : ''}
       </h3>`;
+      const finishedGames = stage.games.filter(g => g.real_local_score !== null && g.real_visit_score !== null);
+      if (finishedGames.length === 0) continue;
       html += `<div class="mgame-list">`;
-      for (const g of stage.games) {
+      for (const g of finishedGames) {
         const realStr = g.real_local
           ? (fmtScore(g.real_local_score, g.real_visit_score)
               ? `${teamFlag(g.real_local)}${esc(g.real_local)} <strong>${g.real_local_score}–${g.real_visit_score}</strong> ${teamFlag(g.real_visit)}${esc(g.real_visit)}`
