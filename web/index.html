@@ -432,6 +432,66 @@
       transition: background 0.15s;
     }
     .cartilla-btn:hover { background: var(--primary-lt); }
+    .cartilla-btn.bases-btn {
+      background: #5a3e8a;
+    }
+    .cartilla-btn.bases-btn:hover { background: #7150a8; }
+    .download-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+
+    /* ── Instrucciones visuales ── */
+    .steps-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .steps-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 1.6rem;
+      height: 1.6rem;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.05rem;
+    }
+    .info-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .info-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e8f0e9;
+      border: 1px solid #b8d4bc;
+      border-radius: 20px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.84rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
 
     .loading {
       text-align: center;
@@ -1129,33 +1189,57 @@
     let downloadHtml = '';
     if (cartilla) {
       downloadHtml = `
-        <a class="cartilla-btn" href="./${cartilla}" download>
-          &#8595; Descargar cartilla (Excel)
-        </a>`;
+        <div class="download-btns">
+          <a class="cartilla-btn" href="./${cartilla}" download>
+            &#8595; Descargar cartilla (Excel)
+          </a>
+          <a class="cartilla-btn bases-btn" href="./Bases USA 2026.docx" download>
+            &#8595; Descargar bases del pool
+          </a>
+        </div>`;
+    } else {
+      downloadHtml = `
+        <div class="download-btns">
+          <p class="about-placeholder">La cartilla no está disponible aún.</p>
+          <a class="cartilla-btn bases-btn" href="./Bases USA 2026.docx" download>
+            &#8595; Descargar bases del pool
+          </a>
+        </div>`;
     }
 
     panel.innerHTML = `
       <h2>Acerca del Pool</h2>
 
       <div class="about-card">
-        <h3>&#128196; Cómo participar</h3>
-        <p class="about-placeholder">
-          <!-- Aquí van las instrucciones de inscripción. Reemplaza este texto cuando quieras. -->
-          ¡Hola a todos! Bienvenidos a este nuevo formato de la cartilla mundialera, edición Mundial USA 2026.
-          Para participar, solo deben descargar el excel, llenar sus predicciones y enviarlas a javial2@uc.cl.
-
-          Además, recuerden que tenemos un grupo de whatsapp donde vamos dando updates a medida que avanza el torneo.
-
-          Por último, la cuota es de 2.000 $. La mitad del pozo será repartida entre los primeros lugares, y la otra mitad será donada all proyecto XYZ.
-
-          Mucha suerte, y que gane el mejor.
+        <h3>👋 ¡Bienvenidos al Pool Mundial USA 2026!</h3>
+        <p style="font-size:0.9rem;color:var(--text);line-height:1.6;margin-bottom:1rem;">
+          ¡Hola a todos! Este año estrenamos formato para la cartilla mundialera. Acá van los pasos para sumarse:
         </p>
+        <ul class="steps-list">
+          <li>
+            <span class="step-num">1</span>
+            <span>Descarga la <strong>cartilla Excel</strong> desde el botón de abajo, completa todas tus predicciones y envíala a <strong>javial2@uc.cl</strong>.</span>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <span>Únete al <strong>grupo de WhatsApp</strong> donde avisamos resultados y novedades a medida que avanza el torneo.</span>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <span>La <strong>cuota de participación es $2.000</strong>. La mitad del pozo se reparte entre los primeros lugares, y la otra mitad va donada al proyecto XYZ.</span>
+          </li>
+        </ul>
+        <div class="info-pills" style="margin-top:1rem;">
+          <span class="info-pill">⚽ Mundial USA 2026</span>
+          <span class="info-pill">💰 Cuota: $2.000</span>
+          <span class="info-pill">📧 javial2@uc.cl</span>
+        </div>
       </div>
 
       <div class="about-card">
-        <h3>&#128229; Cartilla de predicciones</h3>
-        <p>Descarga la cartilla en formato Excel, completa tus predicciones y envíala según las instrucciones.</p>
-        ${downloadHtml || '<p class="about-placeholder">La cartilla no está disponible aún.</p>'}
+        <h3>&#128229; Descargas</h3>
+        <p style="font-size:0.9rem;color:var(--muted);">Descarga la cartilla para ingresar tus predicciones, y las bases del pool para conocer el reglamento completo.</p>
+        ${downloadHtml}
       </div>
 
       <div class="about-card">
