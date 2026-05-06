@@ -4,6 +4,7 @@ import src.points_calculator.game_points as gpc
 import glob
 import json
 import os
+import re
 import shutil
 import http.server
 import socketserver
@@ -167,6 +168,26 @@ def build_export(T, cartilla_filename=None, bracket=None):
     }
 
 
+def slugify(text):
+    """Convert a string to a URL-friendly slug."""
+    # Normalize accented characters
+    replacements = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'à': 'a', 'è': 'e', 'ì': 'i', 'ò': 'o', 'ù': 'u',
+        'ä': 'a', 'ë': 'e', 'ï': 'i', 'ö': 'o', 'ü': 'u',
+        'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u',
+        'ñ': 'n', 'ç': 'c',
+        'Á': 'a', 'É': 'e', 'Í': 'i', 'Ó': 'o', 'Ú': 'u',
+        'Ñ': 'n', 'Ü': 'u',
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9]+', '-', text)
+    text = text.strip('-')
+    return text
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Serve web visualization for a tournament instance.")
     parser.add_argument("--instance", "-i", type=str, required=True,
@@ -174,7 +195,10 @@ if __name__ == "__main__":
     parser.add_argument("--port", "-p", type=int, default=8000,
                         help="Port to serve on (default: 8000)")
     parser.add_argument("--export", action="store_true",
-                        help="Generate docs/index.html for GitHub Pages (no server started)")
+                        help="Generate docs/<slug>/index.html for GitHub Pages (no server started)")
+    parser.add_argument("--slug", "-s", type=str, default=None,
+                        help="URL slug for the tournament subfolder in docs/. "
+                             "Defaults to a slugified version of the instance name.")
     args = parser.parse_args()
 
     print(f"Loading tournament: {args.instance}")
@@ -196,7 +220,11 @@ if __name__ == "__main__":
     data = build_export(T, cartilla_filename, bracket)
 
     if args.export:
-        # Embed data into index.html and write to docs/ for GitHub Pages deployment
+        # Resolve slug
+        slug = args.slug if args.slug else slugify(args.instance)
+        print(f"Using slug: {slug}")
+
+        # Embed data into index.html and write to docs/<slug>/ for GitHub Pages
         template_path = os.path.join(WEB_DIR, "index.html")
         with open(template_path, encoding="utf-8") as f:
             template = f.read()
@@ -208,16 +236,19 @@ if __name__ == "__main__":
         )
         standalone = template.replace("<body>", "<body>\n" + data_script)
 
-        docs_dir = os.path.join(BASE_DIR, "docs")
+        docs_dir = os.path.join(BASE_DIR, "docs", slug)
         os.makedirs(docs_dir, exist_ok=True)
         out_path = os.path.join(docs_dir, "index.html")
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(standalone)
+        print(f"Exported to {out_path}")
+
         if cartilla_filename:
             shutil.copy2(os.path.join(INSTANCE_DIR, cartilla_filename),
                          os.path.join(docs_dir, cartilla_filename))
-            print(f"Cartilla copied to docs/{cartilla_filename}")
-        print(f"Exported to {out_path}")
+            print(f"Cartilla copied to docs/{slug}/{cartilla_filename}")
+
+        print(f"\nURL: https://javial2.github.io/football-tournaments-pool-system/{slug}/")
         print("Commit docs/ and push — GitHub Pages will update automatically.")
     else:
         # Write data.json and start local server
