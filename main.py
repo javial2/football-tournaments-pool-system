@@ -48,6 +48,44 @@ if __name__ == "__main__":
         help="Instance name in ./instances/", 
         type=str
     )
+    parser.add_argument(
+        "--update-players",
+        action="store_true",
+        help="Reload players database from cartillas (requires --instance)."
+    )
+    parser.add_argument(
+        "--update-results",
+        action="store_true",
+        help="Reload results database from Excel (requires --instance)."
+    )
     args = parser.parse_args()
 
-    run(args.instance)
+    # Si se usan los flags de actualización, requieren --instance
+    if (args.update_players or args.update_results) and not args.instance:
+        parser.error("--update-players y --update-results requieren --instance.")
+
+    # Modo no-interactivo: ejecutar solo las actualizaciones pedidas y salir
+    if args.update_players or args.update_results:
+        T = load_tournament(args.instance)
+        T.initialize()
+        if not T.valid:
+            print("Por favor corrija los datos e intente nuevamente.")
+            raise SystemExit(1)
+
+        if args.update_players:
+            print("Actualizando jugadores...")
+            T.reload_players_database(False)
+            if not T.validate_players():
+                print("Error en los datos de jugadores. Por favor corrija e intente nuevamente.")
+                raise SystemExit(1)
+            print("Jugadores actualizados correctamente.")
+
+        if args.update_results:
+            print("Actualizando resultados...")
+            T.reload_results_database(False)
+            T.update_players_points()
+            T.update_ranking()
+            print("Resultados actualizados correctamente.")
+    else:
+        # Modo interactivo normal
+        run(args.instance)
