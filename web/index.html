@@ -508,6 +508,34 @@
       margin: 1rem 0;
     }
 
+    /* ── Champion chart ── */
+    .champ-stat-box {
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .champ-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .champ-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .champ-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
     /* ── Grupos view ── */
     .section-title {
       font-size: 1.1rem;
@@ -704,8 +732,8 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-  // ── Module-level state ──────────────────────────────────────────────
   let appPlayers = [];
 
   // ── Helpers ────────────────────────────────────────────────────────
@@ -794,6 +822,7 @@
                   : 'No iniciada';
 
       const gamesToShow = stage.games.filter(g =>
+        false && // TEMP: descomentar cuando empiece el torneo
         stage.effectiveStarted && (g.finished || nextFourIds.has(g.id))
       );
       if (gamesToShow.length === 0) continue;
@@ -1129,14 +1158,227 @@
     panel.innerHTML = html;
   }
 
+  // ── Champion predictions chart ──────────────────────────────────────
+  function renderChampionChart(stages, players) {
+    const STAGE_ORDER = { top_8: 1, top_16: 0.5, top_4: 2, finals: 3 };
+    const knockoutNids = new Set(['top_16', 'top_8', 'top_4', 'finals']);
+
+    const counts = {};
+    const ensure = t => { if (t && !counts[t]) counts[t] = { champion: 0, runner_up: 0, semis: 0, quarters: 0 }; };
+
+    for (const player of players) {
+      const champ = player.champion_pick;
+      if (!champ) continue;
+      ensure(champ);
+
+      // Collect predicted games per knockout stage
+      const stageGames = {};
+      for (const stg of player.stages) {
+        if (!knockoutNids.has(stg.nid)) continue;
+        stageGames[stg.nid] = stg.games.filter(g => g.pred_local && g.pred_visit);
+      }
+
+      // Teams that reached finals (both finalists)
+      const finalists = new Set();
+      for (const g of (stageGames['finals'] || [])) {
+        if (g.pred_local) finalists.add(g.pred_local);
+        if (g.pred_visit) finalists.add(g.pred_visit);
+      }
+
+      // Teams that reached semis (top_4)
+      const semifinalists = new Set();
+      for (const g of (stageGames['top_4'] || [])) {
+        if (g.pred_local) semifinalists.add(g.pred_local);
+        if (g.pred_visit) semifinalists.add(g.pred_visit);
+      }
+
+      // Teams that reached quarters (top_8)
+      const quarterfinalists = new Set();
+      for (const g of (stageGames['top_8'] || [])) {
+        if (g.pred_local) quarterfinalists.add(g.pred_local);
+        if (g.pred_visit) quarterfinalists.add(g.pred_visit);
+      }
+
+      // Assign each team its best predicted stage (exclusive)
+      const allTeams = new Set([...finalists, ...semifinalists, ...quarterfinalists, champ]);
+      for (const team of allTeams) {
+        ensure(team);
+        if (team === champ) {
+          counts[team].champion++;
+        } else if (finalists.has(team)) {
+          counts[team].runner_up++;
+        } else if (semifinalists.has(team)) {
+          counts[team].semis++;
+        } else if (quarterfinalists.has(team)) {
+          counts[team].quarters++;
+        }
+      }
+    }
+
+    // Sort: campeón desc, subcampeón desc, semis desc, cuartos desc
+    const sorted = Object.entries(counts).sort((a, b) => {
+      const [, ac] = a, [, bc] = b;
+      return (bc.champion - ac.champion)
+          || (bc.runner_up - ac.runner_up)
+          || (bc.semis - ac.semis)
+          || (bc.quarters - ac.quarters)
+          || a[0].localeCompare(b[0]);
+    });
+
+    if (sorted.length === 0) return '';
+
+    const teams    = sorted.map(([t]) => t);
+    const champion = sorted.map(([, c]) => c.champion);
+    const runner   = sorted.map(([, c]) => c.runner_up);
+    const semis    = sorted.map(([, c]) => c.semis);
+    const quarters = sorted.map(([, c]) => c.quarters);
+
+    const chartHeight = Math.max(200, teams.length * 38 + 60);
+    const canvasId = 'champPredChart';
+
+    // Draw flags as Y-axis labels via plugin
+    const flagPlugin = {
+      id: 'flagLabels',
+      afterDraw(chart) {
+        const { ctx, scales: { y } } = chart;
+        teams.forEach((team, i) => {
+          const yPos = y.getPixelForValue(i);
+          const x = y.left - 6;
+          const code = teamFlagCode(team);
+          if (!code) return;
+          const img = new Image(16, 11);
+          img.src = `https://flagcdn.com/w20/${code}.png`;
+          img.onload = () => {
+            ctx.drawImage(img, x - 20, yPos - 5.5, 16, 11);
+          };
+          if (img.complete) {
+            ctx.drawImage(img, x - 20, yPos - 5.5, 16, 11);
+          }
+        });
+      }
+    };
+
+    // Defer chart creation until canvas is in DOM
+    setTimeout(() => {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !window.Chart) return;
+      new window.Chart(canvas, {
+        type: 'bar',
+        plugins: [flagPlugin],
+        data: {
+          labels: teams,
+          datasets: [
+            { label: 'Campeón',          data: champion, backgroundColor: '#c9a227', borderWidth: 0 },
+            { label: 'Subcampeón',        data: runner,   backgroundColor: '#8a9ba8', borderWidth: 0 },
+            { label: 'Semifinal',         data: semis,    backgroundColor: '#8b6347', borderWidth: 0 },
+            { label: 'Cuartos de final',  data: quarters, backgroundColor: '#4a82a6', borderWidth: 0 },
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { left: 24 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e1e1e',
+              titleColor: '#f0f0f0',
+              bodyColor: '#f0f0f0',
+              padding: 10,
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed.x;
+                  if (v === 0) return null;
+                  return ` ${ctx.dataset.label}: ${v} jugador${v !== 1 ? 'es' : ''}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: { stepSize: 1, color: '#666666', font: { size: 11, family: 'system-ui' } },
+              grid:   { color: 'rgba(216,219,216,0.8)' },
+              border: { display: false },
+              title:  { display: true, text: 'Número de jugadores', color: '#666666', font: { size: 11, family: 'system-ui' } }
+            },
+            y: {
+              stacked: true,
+              ticks: { color: '#1a1a1a', font: { size: 12, family: 'system-ui', weight: '600' }, padding: 8 },
+              grid:   { display: false },
+              border: { display: false }
+            }
+          }
+        }
+      });
+    }, 0);
+
+    return `
+      <div class="champ-stat-box"  style="display:none">
+        <div class="stat-box-lbl">Predicciones</div>
+        <div class="champ-legend">
+          <span class="champ-legend-item"><span class="champ-legend-dot" style="background:#c9a227"></span>Campeón</span>
+          <span class="champ-legend-item"><span class="champ-legend-dot" style="background:#8a9ba8"></span>Subcampeón</span>
+          <span class="champ-legend-item"><span class="champ-legend-dot" style="background:#8b6347"></span>Semifinal</span>
+          <span class="champ-legend-item"><span class="champ-legend-dot" style="background:#4a82a6"></span>Cuartos de final</span>
+        </div>
+        <div style="position:relative;width:100%;height:${chartHeight}px;">
+          <canvas id="${canvasId}" role="img" aria-label="Barras apiladas de predicciones de fase por equipo">Predicciones de campeón por equipo.</canvas>
+        </div>
+      </div>`;
+  }
+
+  // Helper: devuelve el código de bandera sin generar HTML
+  function teamFlagCode(name) {
+    if (!name) return '';
+    const codes = {
+      'argentina':'ar','brasil':'br','brazil':'br','uruguay':'uy','colombia':'co',
+      'ecuador':'ec','venezuela':'ve','bolivia':'bo','chile':'cl','paraguay':'py',
+      'perú':'pe','peru':'pe','estados unidos':'us','ee.uu.':'us','usa':'us',
+      'united states':'us','canadá':'ca','canada':'ca','méxico':'mx','mexico':'mx',
+      'panamá':'pa','panama':'pa','jamaica':'jm','honduras':'hn','el salvador':'sv',
+      'guatemala':'gt','cuba':'cu','haití':'ht','haiti':'ht','trinidad y tobago':'tt',
+      'trinidad and tobago':'tt','curazao':'cw','curaçao':'cw','costa rica':'cr',
+      'alemania':'de','germany':'de','francia':'fr','france':'fr','españa':'es',
+      'spain':'es','inglaterra':'gb-eng','england':'gb-eng','portugal':'pt',
+      'países bajos':'nl','holanda':'nl','netherlands':'nl','bélgica':'be',
+      'belgica':'be','belgium':'be','croacia':'hr','croatia':'hr','serbia':'rs',
+      'suiza':'ch','switzerland':'ch','dinamarca':'dk','denmark':'dk','austria':'at',
+      'polonia':'pl','poland':'pl','rumania':'ro','romania':'ro','hungría':'hu',
+      'hungria':'hu','hungary':'hu','turquía':'tr','turquia':'tr','turkey':'tr',
+      'ucrania':'ua','ukraine':'ua','eslovaquia':'sk','slovakia':'sk','eslovenia':'si',
+      'slovenia':'si','república checa':'cz','czechia':'cz','czech republic':'cz',
+      'grecia':'gr','greece':'gr','albania':'al','escocia':'gb-sct','scotland':'gb-sct',
+      'noruega':'no','norway':'no','gales':'gb-wls','wales':'gb-wls','israel':'il',
+      'bosnia':'ba','bosnia and herzegovina':'ba','bosnia y herzegovina':'ba',
+      'marruecos':'ma','morocco':'ma','senegal':'sn','ghana':'gh','camerún':'cm',
+      'camerun':'cm','cameroon':'cm','nigeria':'ng','egipto':'eg','egypt':'eg',
+      'sudáfrica':'za','sudafrica':'za','south africa':'za','mali':'ml',
+      'costa de marfil':'ci',"côte d'ivoire":'ci','ivory coast':'ci','túnez':'tn',
+      'tunez':'tn','tunisia':'tn','argelia':'dz','algeria':'dz','congo':'cd',
+      'congo dr':'cd','rd congo':'cd','kenia':'ke','kenya':'ke','tanzania':'tz',
+      'comoras':'km','comoros':'km','japón':'jp','japon':'jp','japan':'jp',
+      'corea del sur':'kr','corea':'kr','south korea':'kr','korea republic':'kr',
+      'arabia saudita':'sa','saudi arabia':'sa','irán':'ir','iran':'ir',
+      'australia':'au','china':'cn','china pr':'cn','indonesia':'id','irak':'iq',
+      'iraq':'iq','jordania':'jo','jordan':'jo','uzbekistán':'uz','uzbekistan':'uz',
+      'tailandia':'th','thailand':'th','qatar':'qa','catar':'qa','suecia':'se',
+      'sweden':'se','cabo verde':'cv','cape verde':'cv','nueva zelanda':'nz',
+      'new zealand':'nz',
+    };
+    return codes[name.toLowerCase().trim()] || '';
+  }
+
   // ── View 4: Stage progression ───────────────────────────────────────
-  function renderStages(stages) {
+  function renderStages(stages, players) {
     const panel = document.getElementById('tab-stages');
     const knockout = stages
       .filter(s => s.order > 1)
       .sort((a, b) => a.order - b.order);
 
     let html = '<h2>Progresión de Fases</h2>';
+    html += renderChampionChart(stages, players);
 
     for (const stage of knockout) {
       html += `<div class="stage-block"><h3>${formatStageName(stage.nid)}</h3>`;
@@ -1164,7 +1406,7 @@
     const panel = document.getElementById('tab-players');
     const rankMap = Object.fromEntries(ranking.map(r => [r.name, r.rank]));
 
-    let html = '<h2>Jugadores</h2><div class="player-grid">';
+    let html = `<h2>Jugadores</h2><p style="color:var(--muted);font-size:0.88rem;margin-bottom:1rem;">${players.length} jugadores registrados</p><div class="player-grid">`;
     const sorted = [...players].sort((a, b) => b.total_points - a.total_points);
 
     for (const p of sorted) {
@@ -1505,7 +1747,7 @@
     renderRanking(data.ranking);
     renderMatches(data.stages, data.ranking);
     renderGroups(data.stages);
-    renderStages(data.stages);
+    renderStages(data.stages, data.players);
     renderPlayers(data.players, data.ranking);
     renderAbout(data);
 
