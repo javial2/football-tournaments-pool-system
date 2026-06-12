@@ -62,7 +62,50 @@ def build_ranking(T):
     return result
 
 
-def build_stages(T):
+def find_cartilla(instance_path):
+    """Return the filename of the CARTILLA xlsx in the instance folder, or None."""
+    matches = glob.glob(os.path.join(instance_path, "CARTILLA*.xlsx"))
+    if matches:
+        return os.path.basename(matches[0])
+    return None
+
+
+def load_bracket(instance_path):
+    path = os.path.join(instance_path, "config", "bracket.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_schedule(instance_path):
+    """Load schedule.json from config/. Returns dict {game_id: {date, time}} or {}."""
+    path = os.path.join(instance_path, "config", "schedule.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def game_status(game_id, schedule, now_santiago):
+    """
+    Return 'finished', 'live', or 'pending' based on schedule and current time.
+    'live'    = kickoff time - 10 min <= now < kickoff + 110 min (90 min + 20 buffer)
+    'finished' is determined by the game data itself, not the schedule.
+    """
+    entry = schedule.get(str(game_id))
+    if not entry:
+        return "pending"
+    kickoff = datetime.fromisoformat(
+        f"{entry['date']}T{entry['time']}:00"
+    ).replace(tzinfo=ZoneInfo("America/Santiago"))
+    delta = (now_santiago - kickoff).total_seconds() / 60  # minutes since kickoff
+    if delta >= -240:   # kickoff - 10 min
+        return "live"
+    return "pending"
+
+
+def build_stages(T, schedule=None, now_santiago=None):
     stages_out = []
     sorted_stages = sorted(T.stages.values(), key=lambda s: s.order)
     for stage in sorted_stages:
@@ -87,6 +130,14 @@ def build_stages(T):
                     "points_earned":    game.game_points(player),
                     "points_breakdown": game_points_breakdown(game, player),
                 })
+            # Determine status
+            if game.is_game_finished():
+                status = "finished"
+            elif schedule and now_santiago:
+                status = game_status(game.id, schedule, now_santiago)
+            else:
+                status = "pending"
+
             stage_dict["games"].append({
                 "id":          game.id,
                 "local_team":  game.local_team,
@@ -94,13 +145,14 @@ def build_stages(T):
                 "local_score": game.local_score,
                 "visit_score": game.visit_score,
                 "finished":    game.is_game_finished(),
+                "status":      status,
                 "predictions": predictions
             })
         stages_out.append(stage_dict)
     return stages_out
 
 
-def build_players(T):
+def build_players(T, schedule=None, now_santiago=None):
     players_out = []
     sorted_stages = sorted(T.stages.values(), key=lambda s: s.order)
     for player in T.players.values():
@@ -110,6 +162,14 @@ def build_players(T):
             sorted_games = sorted(stage.games.values(), key=lambda g: int(g.id))
             for game in sorted_games:
                 pred_data = player.data["games"][game.id]["data"]
+                # Determine status
+                if game.is_game_finished():
+                    status = "finished"
+                elif schedule and now_santiago:
+                    status = game_status(game.id, schedule, now_santiago)
+                else:
+                    status = "pending"
+
                 game_breakdown.append({
                     "game_id":           game.id,
                     "real_local":        game.local_team,
@@ -122,6 +182,7 @@ def build_players(T):
                     "pred_visit_score":  pred_data["visit_score"],
                     "points_earned":     game.game_points(player),
                     "points_breakdown":  game_points_breakdown(game, player),
+                    "status":            status,
                 })
             player_stages.append({
                 "nid":          stage.nid,
@@ -140,31 +201,16 @@ def build_players(T):
     return players_out
 
 
-def find_cartilla(instance_path):
-    """Return the filename of the CARTILLA xlsx in the instance folder, or None."""
-    matches = glob.glob(os.path.join(instance_path, "CARTILLA*.xlsx"))
-    if matches:
-        return os.path.basename(matches[0])
-    return None
-
-
-def load_bracket(instance_path):
-    path = os.path.join(instance_path, "config", "bracket.json")
-    if not os.path.exists(path):
-        return None
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-def build_export(T, cartilla_filename=None, bracket=None):
+def build_export(T, cartilla_filename=None, bracket=None, schedule=None):
+    now_santiago = datetime.now(ZoneInfo("America/Santiago"))
     return {
         "tournament_name":   T.name,
         "cartilla_filename": cartilla_filename,
-        "last_updated":      datetime.now(ZoneInfo("America/Santiago")).strftime("%d-%m-%Y %H:%M"),
+        "last_updated":      now_santiago.strftime("%d-%m-%Y %H:%M"),
         "bracket":           bracket,
         "ranking":           build_ranking(T),
-        "stages":            build_stages(T),
-        "players":           build_players(T)
+        "stages":            build_stages(T, schedule, now_santiago),
+        "players":           build_players(T, schedule, now_santiago)
     }
 
 
@@ -216,8 +262,13 @@ if __name__ == "__main__":
     os.makedirs(WEB_DIR, exist_ok=True)
 
     cartilla_filename = find_cartilla(INSTANCE_DIR)
-    bracket = load_bracket(INSTANCE_DIR)
-    data = build_export(T, cartilla_filename, bracket)
+    bracket  = load_bracket(INSTANCE_DIR)
+    schedule = load_schedule(INSTANCE_DIR)
+    if schedule:
+        print(f"Schedule loaded: {len(schedule)} games.")
+    else:
+        print("No schedule.json found — all games will show as 'pending'.")
+    data = build_export(T, cartilla_filename, bracket, schedule)
 
     if args.export:
         # Resolve slug
