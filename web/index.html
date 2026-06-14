@@ -221,14 +221,91 @@
     }
     .player-card {
       background: var(--surface);
-      border-radius: 8px;
+      border-radius: 10px;
       box-shadow: var(--shadow);
-      padding: 1rem 1.1rem;
-      border-top: 4px solid var(--primary);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .player-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
-    .player-card p { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
-    .player-card p strong { color: var(--text); }
+    .player-card-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .player-card-header h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .player-card-rank {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .player-card-body {
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .player-card-pts {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .player-card-pts span {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-left: 3px;
+    }
+    .player-card-champ {
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .player-card-champ strong { color: var(--text); }
+    .player-card-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0.25rem 0;
+    }
+    .player-card-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .player-stat {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 0.45rem 0.6rem;
+      text-align: center;
+    }
+    .player-stat-val {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.2;
+    }
+    .player-stat-lbl {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-top: 2px;
+    }
     .badge-win {
       display: inline-block;
       background: var(--win);
@@ -1501,6 +1578,23 @@
   }
 
   // ── View 4: Players list ────────────────────────────────────────────
+  function playerStats(player) {
+    let totalFinished = 0, exactHits = 0, resultHits = 0;
+    for (const stage of player.stages) {
+      for (const g of stage.games) {
+        if (g.status !== 'finished') continue;
+        totalFinished++;
+        const predRes  = getResultType(g.pred_local_score, g.pred_visit_score);
+        const realRes  = getResultType(g.real_local_score, g.real_visit_score);
+        const predL    = Math.round(Number(g.pred_local_score));
+        const predV    = Math.round(Number(g.pred_visit_score));
+        if (predRes === realRes) resultHits++;
+        if (predL === g.real_local_score && predV === g.real_visit_score) exactHits++;
+      }
+    }
+    return { totalFinished, exactHits, resultHits };
+  }
+
   function renderPlayers(players, ranking) {
     const panel = document.getElementById('tab-players');
     const rankMap = Object.fromEntries(ranking.map(r => [r.name, r.rank]));
@@ -1509,13 +1603,36 @@
     const sorted = [...players].sort((a, b) => b.total_points - a.total_points);
 
     for (const p of sorted) {
+      const rank = rankMap[p.name] ?? '—';
+      const rankMedal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
       const champBadge = p.champion_points > 0
-        ? `<span class="badge-win">+${p.champion_points} pts</span>` : '';
+        ? `<span class="badge-win">+${p.champion_points}</span>` : '';
+      const { totalFinished, exactHits, resultHits } = playerStats(p);
+
       html += `<div class="player-card">
-        <h3><button class="player-link" data-name="${esc(p.name)}">${esc(p.name)}</button></h3>
-        <p>Posición: <strong>#${rankMap[p.name] ?? '—'}</strong></p>
-        <p>Puntos: <strong>${p.total_points}</strong></p>
-        <p>Campeón: <strong>${teamFlag(p.champion_pick)}${esc(p.champion_pick || '—')}</strong>${champBadge}</p>
+        <div class="player-card-header">
+          <h3><button class="player-link" style="color:#fff;text-decoration:none;" data-name="${esc(p.name)}">${esc(p.name)}</button></h3>
+          <span class="player-card-rank">${rankMedal}</span>
+        </div>
+        <div class="player-card-body">
+          <div>
+            <div class="player-card-pts">${p.total_points}<span>pts</span></div>
+          </div>
+          <div class="player-card-champ">
+            🏆 ${teamFlag(p.champion_pick)}${esc(p.champion_pick || '—')}${champBadge}
+          </div>
+          <hr class="player-card-divider">
+          <div class="player-card-stats">
+            <div class="player-stat">
+              <div class="player-stat-val">${resultHits}<span style="font-size:0.7rem;font-weight:500;color:var(--muted)"> /${totalFinished}</span></div>
+              <div class="player-stat-lbl">Resultados</div>
+            </div>
+            <div class="player-stat">
+              <div class="player-stat-val">${exactHits}<span style="font-size:0.7rem;font-weight:500;color:var(--muted)"> /${totalFinished}</span></div>
+              <div class="player-stat-lbl">Exactos</div>
+            </div>
+          </div>
+        </div>
       </div>`;
     }
     html += '</div>';
