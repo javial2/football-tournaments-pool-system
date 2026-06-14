@@ -493,11 +493,73 @@
       font-weight: 600;
     }
 
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: var(--muted);
+    /* ── Score players mini-modal ── */
+    .score-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 200;
+    }
+    .score-modal.hidden { display: none; }
+    .score-modal-box {
+      background: var(--surface);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .score-modal-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .score-modal-header h3 { font-size: 0.95rem; font-weight: 700; margin: 0; }
+    .score-modal-header span { font-size: 0.8rem; opacity: 0.75; }
+    .score-modal-close {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 4px;
+      color: #fff;
+      width: 1.8rem;
+      height: 1.8rem;
       font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .score-modal-close:hover { background: rgba(255,255,255,0.15); }
+    .score-modal-body {
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+    }
+    .score-modal-player {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .score-modal-player:last-child { border-bottom: none; }
+    .mbar-row.clickable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: 0 -4px; }
+    .mbar-row.clickable:hover { background: #edf3ee; }
+      .loading {
+        text-align: center;
+        padding: 3rem;
+        color: var(--muted);
+        font-size: 1rem;
     }
     .error {
       text-align: center;
@@ -725,6 +787,19 @@
   <section id="tab-about"    class="tab-panel"></section>
 </main>
 
+<div id="score-modal" class="score-modal hidden">
+  <div class="score-modal-box">
+    <div class="score-modal-header">
+      <div>
+        <h3 id="score-modal-title"></h3>
+        <span id="score-modal-subtitle"></span>
+      </div>
+      <button class="score-modal-close" id="score-modal-close">&times;</button>
+    </div>
+    <div class="score-modal-body" id="score-modal-body"></div>
+  </div>
+</div>
+
 <div id="player-modal" class="modal hidden">
   <div class="modal-box">
     <button class="modal-close" id="modal-close-btn" aria-label="Cerrar">&times;</button>
@@ -830,6 +905,13 @@
       html += `<details open>
         <summary>${label} <span class="badge">${badge}</span></summary>
         <div class="games-list">`;
+      gamesToShow.sort((a, b) => {
+        const aFin = a.status === 'finished';
+        const bFin = b.status === 'finished';
+        if (aFin !== bFin) return aFin ? 1 : -1; // no finalizados primero
+        if (!aFin) return Number(a.id) - Number(b.id); // pendientes: ascendente
+        return Number(b.id) - Number(a.id);             // finalizados: descendente
+      });
       for (const game of gamesToShow) {
         html += buildGameCard(game);
       }
@@ -913,9 +995,11 @@
 
     /* ── 2. Predicted score distribution ── */
     const scoreMap = {};
+    const scorePlayersMap = {};
     for (const p of scored) {
       const k = `${Math.round(Number(p.local_score))}-${Math.round(Number(p.visit_score))}`;
       scoreMap[k] = (scoreMap[k] || 0) + 1;
+      (scorePlayersMap[k] = scorePlayersMap[k] || []).push(p.player_name);
     }
     const realKey   = game.finished ? `${game.local_score}-${game.visit_score}` : null;
     const topScores = Object.entries(scoreMap).sort((a, b) => b[1] - a[1]);
@@ -926,7 +1010,12 @@
       const [ls, vs] = sc.split('-').map(Number);
       const clr = RES_COLORS[getResultType(ls, vs)];
       const isR = sc === realKey;
-      scoreRows += `<div class="mbar-row${isR ? ' real' : ''}">
+      const players = scorePlayersMap[sc] || [];
+      const clickable = game.finished || game.status === 'live';
+      const clickAttr = clickable
+        ? ` data-score="${esc(sc)}" data-players="${esc(JSON.stringify(players))}" data-game="${esc(game.local_team)} vs ${esc(game.visit_team)}"`
+        : '';
+      scoreRows += `<div class="mbar-row${isR ? ' real' : ''}${clickable ? ' clickable' : ''}"${clickAttr}>
         <span class="mbar-lbl">${sc}${isR ? ' ★' : ''}</span>
         <div class="mbar-track"><div class="mbar-fill" style="width:${Math.round(cnt/maxSc*100)}%;background:${clr}"></div></div>
         <span class="mbar-cnt">${cnt}</span>
@@ -1569,9 +1658,40 @@
     document.body.style.overflow = '';
   }
 
+  function openScoreModal(score, players, gameLabel) {
+    document.getElementById('score-modal-title').textContent = `Marcador ${score}`;
+    document.getElementById('score-modal-subtitle').textContent =
+      `${gameLabel} · ${players.length} jugador${players.length !== 1 ? 'es' : ''}`;
+    const body = document.getElementById('score-modal-body');
+    body.innerHTML = players
+      .sort((a, b) => a.localeCompare(b))
+      .map(name => `<div class="score-modal-player">${esc(name)}</div>`)
+      .join('');
+    document.getElementById('score-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeScoreModal() {
+    document.getElementById('score-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
   // ── Event delegation ────────────────────────────────────────────────
   function setupEvents() {
     document.body.addEventListener('click', e => {
+      // Score modal
+      const bar = e.target.closest('.mbar-row.clickable');
+      if (bar) {
+        const players = JSON.parse(bar.dataset.players || '[]');
+        openScoreModal(bar.dataset.score, players, bar.dataset.game);
+        return;
+      }
+      if (e.target.id === 'score-modal-close' || e.target.id === 'score-modal') {
+        closeScoreModal();
+        return;
+      }
+
+      // Player modal
       const btn = e.target.closest('.player-link');
       if (btn) { openPlayerModal(btn.dataset.name); return; }
 
@@ -1581,7 +1701,10 @@
     });
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closePlayerModal();
+      if (e.key === 'Escape') {
+        closeScoreModal();
+        closePlayerModal();
+      }
     });
   }
 
