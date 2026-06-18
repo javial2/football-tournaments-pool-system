@@ -602,6 +602,11 @@
       align-items: center;
       flex-shrink: 0;
     }
+    .score-modal-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
     .score-modal-header h3 { font-size: 0.95rem; font-weight: 700; margin: 0; }
     .score-modal-header span { font-size: 0.8rem; opacity: 0.75; }
     .score-modal-close {
@@ -632,7 +637,38 @@
     .score-modal-player:last-child { border-bottom: none; }
     .mbar-row.clickable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: 0 -4px; }
     .mbar-row.clickable:hover { background: #edf3ee; }
-      .loading {
+      /* ── Form badges ── */
+    .player-card-form {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.1rem;
+    }
+    .form-badge {
+      font-size: 1.1rem;
+      cursor: default;
+      position: relative;
+    }
+    .form-badge::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e1e1e;
+      color: #f0f0f0;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      padding: 0.4rem 0.65rem;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .form-badge:hover::after { opacity: 1; }
+
+    .loading {
         text-align: center;
         padding: 3rem;
         color: var(--muted);
@@ -867,7 +903,7 @@
 <div id="score-modal" class="score-modal hidden">
   <div class="score-modal-box">
     <div class="score-modal-header">
-      <div>
+      <div class="score-modal-header-text">
         <h3 id="score-modal-title"></h3>
         <span id="score-modal-subtitle"></span>
       </div>
@@ -919,16 +955,22 @@
   }
 
   // ── View 1: Rankings ────────────────────────────────────────────────
-  function renderRanking(ranking) {
+  function renderRanking(ranking, players) {
     const panel = document.getElementById('tab-ranking');
+    const playerMap = Object.fromEntries(players.map(p => [p.name, p]));
     let html = '<h2>Tabla de Posiciones</h2>';
     html += '<table class="data-table"><thead><tr><th>#</th><th>Jugador</th><th>Puntos</th></tr></thead><tbody>';
 
     for (const row of ranking) {
       const medal = row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : row.rank === 3 ? '🥉' : row.rank;
+      const p = playerMap[row.name];
+      const badges = p ? formBadgesHtml(playerForm(p)) : '';
       html += `<tr>
         <td class="rank-medal">${medal}</td>
-        <td><button class="player-link" data-name="${esc(row.name)}">${esc(row.name)}</button></td>
+        <td>
+          <button class="player-link" data-name="${esc(row.name)}">${esc(row.name)}</button>
+          ${badges ? `<span style="margin-left:6px;">${badges}</span>` : ''}
+        </td>
         <td class="pts">${row.points}</td>
       </tr>`;
     }
@@ -1584,15 +1626,84 @@
       for (const g of stage.games) {
         if (g.status !== 'finished') continue;
         totalFinished++;
-        const predRes  = getResultType(g.pred_local_score, g.pred_visit_score);
-        const realRes  = getResultType(g.real_local_score, g.real_visit_score);
-        const predL    = Math.round(Number(g.pred_local_score));
-        const predV    = Math.round(Number(g.pred_visit_score));
+        const predRes = getResultType(g.pred_local_score, g.pred_visit_score);
+        const realRes = getResultType(g.real_local_score, g.real_visit_score);
+        const predL   = Math.round(Number(g.pred_local_score));
+        const predV   = Math.round(Number(g.pred_visit_score));
         if (predRes === realRes) resultHits++;
         if (predL === g.real_local_score && predV === g.real_visit_score) exactHits++;
       }
     }
     return { totalFinished, exactHits, resultHits };
+  }
+
+  function playerForm(player) {
+    // Collect all finished games in order
+    const finished = [];
+    for (const stage of player.stages) {
+      for (const g of stage.games) {
+        if (g.status !== 'finished') continue;
+        const predRes  = getResultType(g.pred_local_score, g.pred_visit_score);
+        const realRes  = getResultType(g.real_local_score, g.real_visit_score);
+        const predL    = Math.round(Number(g.pred_local_score));
+        const predV    = Math.round(Number(g.pred_visit_score));
+        finished.push({
+          id:           Number(g.game_id),
+          resultOk:     predRes === realRes,
+          exactOk:      predL === g.real_local_score && predV === g.real_visit_score,
+        });
+      }
+    }
+    finished.sort((a, b) => a.id - b.id);
+
+    const badges = [];
+
+    // 🔥 Racha de 3+ partidos consecutivos con resultado correcto
+    let resultStreak = 0;
+    for (let i = finished.length - 1; i >= 0; i--) {
+      if (finished[i].resultOk) resultStreak++;
+      else break;
+    }
+    if (resultStreak >= 3) {
+      badges.push({
+        icon: '🔥',
+        tooltip: `Racha de ${resultStreak} partidos consecutivos con ganador correcto`
+      });
+    }
+
+    // ⭐ Racha de 2+ partidos consecutivos con marcador exacto
+    let exactStreak = 0;
+    for (let i = finished.length - 1; i >= 0; i--) {
+      if (finished[i].exactOk) exactStreak++;
+      else break;
+    }
+    if (exactStreak >= 2) {
+      badges.push({
+        icon: '⭐',
+        tooltip: `Racha de ${exactStreak} marcadores exactos consecutivos`
+      });
+    }
+
+    // 💪 Ganador correcto en 4 de los últimos 5
+    const last5 = finished.slice(-5);
+    if (last5.length === 5) {
+      const hits5 = last5.filter(g => g.resultOk).length;
+      if (hits5 >= 4) {
+        badges.push({
+          icon: '💪',
+          tooltip: `Ganador correcto en ${hits5} de los últimos 5 partidos`
+        });
+      }
+    }
+
+    return badges;
+  }
+
+  function formBadgesHtml(badges) {
+    if (!badges.length) return '';
+    return badges.map(b =>
+      `<span class="form-badge" data-tooltip="${esc(b.tooltip)}">${b.icon}</span>`
+    ).join('');
   }
 
   function renderPlayers(players, ranking) {
@@ -1608,6 +1719,7 @@
       const champBadge = p.champion_points > 0
         ? `<span class="badge-win">+${p.champion_points}</span>` : '';
       const { totalFinished, exactHits, resultHits } = playerStats(p);
+      const badges = formBadgesHtml(playerForm(p));
 
       html += `<div class="player-card">
         <div class="player-card-header">
@@ -1632,6 +1744,7 @@
               <div class="player-stat-lbl">Exactos</div>
             </div>
           </div>
+          ${badges ? `<div class="player-card-form">${badges}</div>` : ''}
         </div>
       </div>`;
     }
@@ -1776,9 +1889,9 @@
   }
 
   function openScoreModal(score, players, gameLabel) {
-    document.getElementById('score-modal-title').textContent = `Marcador ${score}`;
+    document.getElementById('score-modal-title').textContent = gameLabel;
     document.getElementById('score-modal-subtitle').textContent =
-      `${gameLabel} · ${players.length} jugador${players.length !== 1 ? 'es' : ''}`;
+      `Marcador ${score} · ${players.length} jugador${players.length !== 1 ? 'es' : ''}`;
     const body = document.getElementById('score-modal-body');
     body.innerHTML = players
       .sort((a, b) => a.localeCompare(b))
@@ -2000,7 +2113,7 @@
       document.getElementById('last-updated').textContent = 'Actualizado: ' + data.last_updated;
     }
 
-    renderRanking(data.ranking);
+    renderRanking(data.ranking, data.players);
     renderMatches(data.stages, data.ranking);
     renderGroups(data.stages);
     renderStages(data.stages, data.players);
