@@ -45,6 +45,70 @@ def game_points_breakdown(game, player):
     return breakdown
 
 
+def team_coverage(game, players):
+    """
+    Classify every player by how many of the two real teams of `game` they
+    have in the exact same position (local/visit) in their prediction for
+    this specific game id — using the SAME logic as the points system
+    (gpc.points_per_team), so this is strict/non-reversible unless the
+    stage's points_system says otherwise (finals, third-place).
+
+    Returns a dict:
+        {
+            "local_only":  {"count": int, "players": [names]},
+            "visit_only":  {"count": int, "players": [names]},
+            "both":        {"count": int, "players": [names]},
+            "none":        {"count": int, "players": [names]},
+        }
+    Only meaningful for knockout-stage games where both real teams are
+    already known (local_team and visit_team not None). Returns None
+    otherwise (e.g. groups stage, or a knockout game whose teams are not
+    yet defined).
+    """
+    real_game = game.game_data
+    if not real_game.get('local_team') or not real_game.get('visit_team'):
+        return None
+
+    team_cfg = game.points_system.get('points_per_team')
+    if not team_cfg:
+        return None
+    restrictions = team_cfg['restrictions']
+    reversible = restrictions.get('reversible', False)
+
+    buckets = {
+        "local_only": [],
+        "visit_only": [],
+        "both":       [],
+        "none":       [],
+    }
+
+    for player in players:
+        predicted_game = player.data['games'][game.id]['data']
+        if not predicted_game.get('local_team') or not predicted_game.get('visit_team'):
+            continue  # player hasn't predicted any teams for this game yet
+
+        pg = predicted_game
+        if reversible:
+            pg = gpc.reverse_game(real_game, predicted_game)
+
+        has_local = real_game['local_team'] == pg['local_team']
+        has_visit = real_game['visit_team'] == pg['visit_team']
+
+        if has_local and has_visit:
+            buckets["both"].append(player.name)
+        elif has_local:
+            buckets["local_only"].append(player.name)
+        elif has_visit:
+            buckets["visit_only"].append(player.name)
+        else:
+            buckets["none"].append(player.name)
+
+    return {
+        key: {"count": len(names), "players": sorted(names)}
+        for key, names in buckets.items()
+    }
+
+
 def build_ranking(T):
     p_list = [[p.name, p.points] for p in T.players.values()]
     sorted_list = sorted(p_list, key=lambda x: x[1], reverse=True)
@@ -100,7 +164,7 @@ def game_status(game_id, schedule, now_santiago):
         f"{entry['date']}T{entry['time']}:00"
     ).replace(tzinfo=ZoneInfo("America/Santiago"))
     delta = (now_santiago - kickoff).total_seconds() / 60  # minutes since kickoff
-    if delta >= -240:   # kickoff - 10 min
+    if delta >= -30:   # kickoff - 10 min
         return "live"
     return "pending"
 
@@ -109,6 +173,7 @@ def build_stages(T, schedule=None, now_santiago=None):
     stages_out = []
     sorted_stages = sorted(T.stages.values(), key=lambda s: s.order)
     for stage in sorted_stages:
+        is_knockout = stage.nid != 'groups'
         stage_dict = {
             "nid":      stage.nid,
             "order":    stage.order,
@@ -118,9 +183,24 @@ def build_stages(T, schedule=None, now_santiago=None):
         }
         sorted_games = sorted(stage.games.values(), key=lambda g: int(g.id))
         for game in sorted_games:
+            # Coverage classification (only meaningful for knockout games
+            # where both real teams are already defined)
+            coverage = team_coverage(game, T.players.values()) if is_knockout else None
+            eligible_players = None
+            if coverage is not None:
+                eligible_players = set(
+                    coverage["local_only"]["players"]
+                    + coverage["visit_only"]["players"]
+                    + coverage["both"]["players"]
+                )
+
             predictions = []
             for player in T.players.values():
                 pred_data = player.data["games"][game.id]["data"]
+                has_teams = (
+                    eligible_players is None
+                    or player.name in eligible_players
+                )
                 predictions.append({
                     "player_name":      player.name,
                     "local_team":       pred_data["local_team"],
@@ -129,6 +209,7 @@ def build_stages(T, schedule=None, now_santiago=None):
                     "visit_score":      pred_data["visit_score"],
                     "points_earned":    game.game_points(player),
                     "points_breakdown": game_points_breakdown(game, player),
+                    "has_teams":        has_teams,
                 })
             # Determine status
             if game.is_game_finished():
@@ -139,14 +220,15 @@ def build_stages(T, schedule=None, now_santiago=None):
                 status = "pending"
 
             stage_dict["games"].append({
-                "id":          game.id,
-                "local_team":  game.local_team,
-                "visit_team":  game.visit_team,
-                "local_score": game.local_score,
-                "visit_score": game.visit_score,
-                "finished":    game.is_game_finished(),
-                "status":      status,
-                "predictions": predictions
+                "id":             game.id,
+                "local_team":     game.local_team,
+                "visit_team":     game.visit_team,
+                "local_score":    game.local_score,
+                "visit_score":    game.visit_score,
+                "finished":       game.is_game_finished(),
+                "status":         status,
+                "predictions":    predictions,
+                "teams_coverage": coverage,
             })
         stages_out.append(stage_dict)
     return stages_out

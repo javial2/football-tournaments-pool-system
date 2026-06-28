@@ -1053,7 +1053,10 @@
       ? `<div class="game-score-box">${game.local_score}&nbsp;–&nbsp;${game.visit_score}</div>`
       : `<div class="game-score-box tbd">vs</div>`;
 
-    const scored    = (game.predictions || []).filter(p => p.local_score !== null && p.visit_score !== null);
+    const scored    = (game.predictions || []).filter(p =>
+      p.local_score !== null && p.visit_score !== null && p.has_teams !== false
+    );
+    const coverageHtml = game.teams_coverage ? buildCoverageStats(game) : '';
     const statsHtml = scored.length ? buildGameStats(game, scored) : '';
 
     return `<div class="game-card-v2">
@@ -1072,7 +1075,43 @@
           </div>
         </div>
       </div>
+      ${coverageHtml}
       ${statsHtml}
+    </div>`;
+  }
+
+  function buildCoverageStats(game) {
+    const cov = game.teams_coverage;
+    const local = game.local_team || '?';
+    const visit = game.visit_team || '?';
+    const total = cov.local_only.count + cov.visit_only.count + cov.both.count + cov.none.count;
+    const eligible = cov.local_only.count + cov.visit_only.count + cov.both.count;
+    if (total === 0) return '';
+
+    const rows = [
+      { lbl: `${teamFlag(local)}${esc(local)}`, cnt: cov.local_only.count, color: '#1d6fa4' },
+      { lbl: `${teamFlag(visit)}${esc(visit)}`, cnt: cov.visit_only.count, color: '#1d6fa4' },
+      { lbl: 'Ambos',   cnt: cov.both.count, color: '#9ca3af' },
+      { lbl: 'Ninguno', cnt: cov.none.count, color: '#d1d5db' },
+    ];
+    const max = Math.max(...rows.map(r => r.cnt), 1);
+
+    let barsHtml = '';
+    for (const r of rows) {
+      const pct = Math.round(r.cnt / total * 100);
+      barsHtml += `<div class="mbar-row">
+        <span class="mbar-lbl">${r.lbl}</span>
+        <div class="mbar-track"><div class="mbar-fill" style="width:${Math.round(r.cnt/max*100)}%;background:${r.color}"></div></div>
+        <span class="mbar-cnt">${r.cnt} (${pct}%)</span>
+      </div>`;
+    }
+
+    return `<div class="game-stats-body" style="grid-template-columns:1fr;">
+      <div class="stat-box wide">
+        <div class="stat-box-lbl">Cobertura de la llave (jugadores)</div>
+        ${barsHtml}
+        <div class="res-bar-note">${eligible} de ${total} jugadores tienen a ${esc(local)} o ${esc(visit)} en este cruce.</div>
+      </div>
     </div>`;
   }
 
@@ -1096,9 +1135,13 @@
       ? `★ Resultado real: ${realLbl} — acertaron ${rc[realRes]} de ${n}`
       : `${n} predicciones registradas`;
 
+    const sampleNote = game.teams_coverage
+      ? ` <span style="font-weight:500;text-transform:none;color:var(--muted);">(n=${n}, con ${esc(local)} o ${esc(visit)})</span>`
+      : '';
+
     const resBarHtml = `
       <div class="stat-box">
-        <div class="stat-box-lbl">Predicción de resultado</div>
+        <div class="stat-box-lbl">Predicción de resultado${sampleNote}</div>
         <div class="res-bar">
           ${localPct ? `<div class="res-bar-seg" style="width:${localPct}%;background:${RES_COLORS.local}"></div>` : ''}
           ${tiePct   ? `<div class="res-bar-seg" style="width:${tiePct}%;background:${RES_COLORS.tie}"></div>`     : ''}
@@ -1142,7 +1185,7 @@
     }
     const scoreBarHtml = `
       <div class="stat-box">
-        <div class="stat-box-lbl">Marcadores predichos</div>
+        <div class="stat-box-lbl">Marcadores predichos${sampleNote}</div>
         ${scoreRows || '<span style="color:var(--muted);font-size:0.8rem">Sin datos</span>'}
       </div>`;
 
