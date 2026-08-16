@@ -5,3 +5,6 @@
 __pycache__/
 *.pyc
 **/__pycache__
+
+/web/data.json
+/web/CARTILLA*.xlsx

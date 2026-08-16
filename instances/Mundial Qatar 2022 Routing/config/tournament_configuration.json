@@ -1,0 +1,52 @@
+{
+    "tournament_name": "Mundial Qatar 2022",
+    "tournament_point_types": ["games", "stages", "champion"],
+    "players_database": "database/players_database.json",
+    "results_database": "database/results_database.json",
+    "stats_folder": "stats/",
+    "results_xlsx": "RESULTADOS_REALES.xlsx",
+    "tournament_stages": {
+        "groups": {
+            "nid": "groups",
+            "order": 1,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48"] 
+        },
+        "top_16": {
+            "nid": "top_16",
+            "order": 2,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["49", "50", "51", "52", "53", "54", "55", "56"]
+        },
+        "top_8": {
+            "nid": "top_8",
+            "order": 3,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["57", "58", "59", "60"]
+        },
+        "top_4": {
+            "nid": "top_4",
+            "order": 4,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["61", "62"]
+        },
+        "finals": {
+            "nid": "finals",
+            "order": 6,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["64"]
+        },
+        "third_place": {
+            "nid": "third_place",
+            "order": 5,
+            "stage_point_types": ["teams"],
+            "game_point_types": ["base"],
+            "games": ["63"]
+        }
+    }
+}

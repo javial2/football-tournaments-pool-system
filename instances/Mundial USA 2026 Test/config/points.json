@@ -1,0 +1,222 @@
+{
+    "tournament": {
+        "champion": {
+            "value": 7,
+            "restrictions": {}
+        },
+        "stages": {
+            "groups": {
+                "games": {
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 0,
+                            "reversible": false,
+                            "result": true
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 0,
+                            "reversible": false,
+                            "result": true
+                        }
+                    }
+                }
+            },
+            "top-32": {
+                "teams": {
+                    "value": 1,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    }
+                }
+            },
+            "top-16": {
+                "teams": {
+                    "value": 2,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    }
+                }
+            },
+            "top-8": {
+                "teams": {
+                    "value": 3,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    }
+                }
+            },
+            "top-4": {
+                "teams": {
+                    "value": 4,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": false,
+                            "result": false
+                        }
+                    }
+                }
+            },
+            "finals": {
+                "teams": {
+                    "value": 5,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    }
+                }
+            },
+            "third-place": {
+                "teams": {
+                    "value": 0,
+                    "restrictions": {}
+                },
+                "games": {
+                    "points_per_team": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    },
+                    "points_per_result": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    },
+                    "points_per_score": {
+                        "value": 1,
+                        "restrictions": {
+                            "teams": 1,
+                            "reversible": true,
+                            "result": false
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
